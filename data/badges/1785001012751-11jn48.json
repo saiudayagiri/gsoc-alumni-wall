@@ -6,22 +6,23 @@
   "org": "TestOrg",
   "event": "GSoC Alumni",
   "city": "",
-  "year": "2024",
+  "year": "2026",
   "role": "GSoCer",
   "roadmap": [
     {
       "role": "Contributor",
       "org": "TestOrg",
       "year": "2024"
-    }
-  ],
-  "socials": [
+    },
     {
-      "platform": "GitHub",
-      "url": "edit-test"
+      "role": "Mentor",
+      "org": "OtherOrg",
+      "year": "2026"
     }
   ],
+  "socials": [],
   "photo": "",
   "owner": "53e91532c7bacab46a862f398e14dbec19a906074e9645eba7f5d4c74725345a",
-  "createdAt": "2026-07-25T17:36:52.751Z"
+  "createdAt": "2026-07-25T17:36:52.751Z",
+  "updatedAt": "2026-07-25T17:37:16.029Z"
 }
