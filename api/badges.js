@@ -25,6 +25,45 @@ async function readBadges() {
 const clean = (s, max = 200) => String(s ?? '').slice(0, max).trim();
 const SAFE_ID = /^[0-9]+-[a-z0-9]+$/;
 
+// Best-effort mirror of every badge into the GitHub repo (data/badges/<id>.json)
+// so the wall survives losing the Vercel Blob store. Never fails the request.
+const GH_REPO = 'saiudayagiri/gsoc-alumni-wall';
+async function ghBackup(action, id, entry) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return;
+  const url = `https://api.github.com/repos/${GH_REPO}/contents/data/badges/${id}.json`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'gsoc-alumni-wall',
+    'Content-Type': 'application/json',
+  };
+  try {
+    let sha;
+    const existing = await fetch(url, { headers });
+    if (existing.ok) sha = (await existing.json()).sha;
+    if (action === 'save') {
+      await fetch(url, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          message: `backup: badge ${id} (${entry.name})`,
+          content: Buffer.from(JSON.stringify(entry, null, 2)).toString('base64'),
+          ...(sha ? { sha } : {}),
+        }),
+      });
+    } else if (action === 'remove' && sha) {
+      await fetch(url, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ message: `backup: remove badge ${id}`, sha }),
+      });
+    }
+  } catch (e) {
+    console.error('github backup failed', e);
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   try {
@@ -70,6 +109,7 @@ export default async function handler(req, res) {
         contentType: 'application/json',
         cacheControlMaxAge: 31536000,
       });
+      await ghBackup('save', entry.id, entry);
       return res.status(201).json({ badge: entry });
     }
 
@@ -77,6 +117,7 @@ export default async function handler(req, res) {
       const id = clean(req.query.id, 60);
       if (!SAFE_ID.test(id)) return res.status(400).json({ error: 'valid id required' });
       await del(`${PREFIX}${id}.json`);
+      await ghBackup('remove', id, null);
       return res.status(200).json({ ok: true });
     }
 

@@ -236,6 +236,10 @@
     box-shadow:var(--shadow);padding:18px;overflow:auto;
     display:flex;flex-direction:column;
   }
+  /* the hidden face must never intercept clicks meant for the visible one */
+  .flipcard .face.backside{pointer-events:none}
+  .flipcard.is-flipped .face.backside{pointer-events:auto}
+  .flipcard.is-flipped .face.front{pointer-events:none}
   .flipcard:hover .badge-sm{box-shadow:var(--shadow-lift);transform:translateY(-3px)}
 
   /* scaled-down badge front */
@@ -573,10 +577,19 @@
   }
 
   function linkedinUrl(v){
+    v = String(v || "").trim();
     if(!v) return "";
-    v = v.trim().replace(/^https?:\/\//,"").replace(/^www\./,"");
-    if(v.startsWith("linkedin.com")) return "https://www." + v;
-    return "https://www.linkedin.com/in/" + encodeURIComponent(v.replace(/^in\//,"").replace(/\/+$/,""));
+    v = v.replace(/^@/,"").replace(/^https?:\/\//i,"").replace(/^www\./i,"");
+    const m = v.match(/^linkedin\.com\/(.*)$/i);
+    if(m){
+      // full URL pasted — keep the path, but profiles must live under /in/
+      let path = m[1].replace(/^\/+/,"").replace(/\/+$/,"");
+      if(path && !/^(in|pub|company|school)\//i.test(path)) path = "in/" + path;
+      return "https://www.linkedin.com/" + (path || "");
+    }
+    // bare id — strip stray "in/", slashes, and spaces
+    const id = v.replace(/^in\//i,"").replace(/\/+$/,"").replace(/\s+/g,"-");
+    return "https://www.linkedin.com/in/" + encodeURIComponent(id);
   }
 
   function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
