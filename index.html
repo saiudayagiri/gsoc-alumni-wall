@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSoC Alumni Badge Wall</title>
+<meta name="description" content="A community wall of Google Summer of Code alumni conference badges — flip a badge to see the alum's GSoC roadmap and LinkedIn.">
+<style>
+  :root{
+    --orange:#E8710A;
+    --orange-deep:#C85803;
+    --amber:#F9AB00;
+    --red:#D93025;
+    --green:#188038;
+    --blue:#1A73E8;
+    --ground:#F4F3F0;
+    --card:#FFFFFF;
+    --ink:#1F2023;
+    --ink-soft:#5A5C60;
+    --line:#E4E2DD;
+    --strap:#F9AB00;
+    --strap-edge:#D98E00;
+    --shadow:0 10px 30px rgba(31,32,35,.12), 0 2px 6px rgba(31,32,35,.08);
+    --shadow-lift:0 22px 50px rgba(31,32,35,.18), 0 4px 10px rgba(31,32,35,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ground:#17181B;
+      --card:#232428;
+      --ink:#F0EFEC;
+      --ink-soft:#A6A8AD;
+      --line:#35363B;
+      --shadow:0 10px 30px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
+      --shadow-lift:0 22px 50px rgba(0,0,0,.55), 0 4px 10px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#17181B;
+    --card:#232428;
+    --ink:#F0EFEC;
+    --ink-soft:#A6A8AD;
+    --line:#35363B;
+    --shadow:0 10px 30px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
+    --shadow-lift:0 22px 50px rgba(0,0,0,.55), 0 4px 10px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --ground:#F4F3F0;
+    --card:#FFFFFF;
+    --ink:#1F2023;
+    --ink-soft:#5A5C60;
+    --line:#E4E2DD;
+    --shadow:0 10px 30px rgba(31,32,35,.12), 0 2px 6px rgba(31,32,35,.08);
+    --shadow-lift:0 22px 50px rgba(31,32,35,.18), 0 4px 10px rgba(31,32,35,.10);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{color-scheme:light dark}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace}
+  .script{font-family:"Snell Roundhand","Savoye LET","Segoe Script","Bradley Hand",cursive}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header.site{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 0;gap:16px;flex-wrap:wrap;
+  }
+  .wordmark{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+  .codechip{
+    width:30px;height:30px;border-radius:8px;background:var(--orange);color:#fff;
+    display:grid;place-items:center;font-size:13px;font-weight:800;
+    font-family:ui-monospace,monospace;flex-shrink:0;
+  }
+  .disclaimer{
+    font-size:12px;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:99px;padding:5px 14px;
+  }
+  .head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .gh-link{
+    display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
+    color:var(--ink);text-decoration:none;border:1px solid var(--line);
+    border-radius:99px;padding:5px 14px;transition:border-color .15s ease;
+  }
+  .gh-link:hover{border-color:var(--ink-soft)}
+  .gh-link svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+  footer.site a{color:inherit;font-weight:600}
+
+  /* ---------- hero ---------- */
+  .hero{
+    display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+    gap:48px;align-items:center;padding:48px 0 72px;
+  }
+  @media (max-width:820px){ .hero{grid-template-columns:1fr;padding-top:16px} }
+  .eyebrow{
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--orange);font-weight:700;margin:0 0 14px;
+  }
+  h1{
+    font-size:clamp(34px,5vw,54px);line-height:1.06;letter-spacing:-.03em;
+    font-weight:800;margin:0 0 18px;text-wrap:balance;
+  }
+  h1 .accent{color:var(--orange)}
+  .hero p.lede{max-width:52ch;color:var(--ink-soft);font-size:17px;margin:0 0 28px}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    border-radius:10px;padding:12px 22px;font-size:15px;font-weight:700;
+    cursor:pointer;border:1px solid transparent;text-decoration:none;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:focus-visible, .chip:focus-visible, .flipcard:focus-visible,
+  input:focus-visible, select:focus-visible, button:focus-visible{
+    outline:3px solid var(--amber);outline-offset:2px;
+  }
+  .btn-primary{background:var(--orange);color:#fff}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(232,113,10,.35)}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--ink-soft)}
+
+  .hero-stats{display:flex;gap:32px;margin-top:36px}
+  .stat b{display:block;font-size:26px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat span{font-size:12px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase}
+
+  /* ---------- the badge (shared design) ---------- */
+  .lanyard-zone{display:flex;justify-content:center}
+  .hang{position:relative;padding-top:120px;width:min(340px,86vw)}
+  .strap{
+    position:absolute;top:-40px;width:26px;height:150px;border-radius:4px;z-index:0;
+    background:linear-gradient(90deg,var(--strap-edge),var(--strap) 30%,var(--strap) 70%,var(--strap-edge));
+  }
+  .strap.left{left:16%;transform:rotate(9deg)}
+  .strap.right{right:16%;transform:rotate(-9deg)}
+  .strap::after{ /* metal clip */
+    content:"";position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);
+    width:16px;height:30px;border-radius:8px 8px 10px 10px;
+    background:linear-gradient(180deg,#d9dadd,#9a9ca1 60%,#c9cacd);
+    border:1px solid #8a8c91;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .hero .hang{animation:sway 6s ease-in-out infinite;transform-origin:top center}
+    @keyframes sway{0%,100%{transform:rotate(-1.1deg)}50%{transform:rotate(1.1deg)}}
+  }
+  a.badge-link{text-decoration:none;color:inherit;display:block;position:relative;z-index:1}
+  a.badge-link:hover .badge{box-shadow:var(--shadow-lift);transform:translateY(-2px)}
+
+  .badge{
+    background:var(--card);border-radius:20px;box-shadow:var(--shadow-lift);
+    padding:26px 26px 20px;position:relative;border:1px solid var(--line);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .badge .holes{display:flex;justify-content:space-between;padding:0 14%;margin-bottom:14px}
+  .badge .hole{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--ground);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+  }
+  .badge .gsoc-line{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .badge .gsoc-mark{
+    width:18px;height:18px;flex-shrink:0;border-radius:4px;background:var(--orange);
+    color:#fff;display:grid;place-items:center;font-size:9px;font-weight:800;
+    font-family:ui-monospace,monospace;
+  }
+  .badge h2.event{
+    font-size:clamp(24px,4.4vw,30px);line-height:1.08;letter-spacing:-.025em;
+    font-weight:800;margin:14px 0 2px;
+  }
+  .badge .city{font-size:15px;color:var(--ink-soft);margin:0 0 18px}
+  .badge .divider{height:1px;background:var(--line);margin:0 0 16px}
+  .badge .person{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0;text-transform:lowercase;overflow-wrap:anywhere}
+  .badge .org{font-size:15px;color:var(--ink-soft);margin:2px 0 0;overflow-wrap:anywhere}
+  .badge .sigs{margin:16px 0 4px;min-height:44px}
+  .badge .sigs .sig{font-size:21px;line-height:1.25;color:var(--ink);opacity:.85}
+  .badge .sigs .sig.blue{color:var(--blue);opacity:.9}
+  .badge .hexes{position:absolute;right:18px;bottom:52px;opacity:.9}
+  .badge .role{
+    text-align:center;color:var(--orange);font-weight:800;font-size:19px;
+    letter-spacing:.01em;margin-top:10px;
+  }
+
+  /* ---------- wall section ---------- */
+  section.wall{padding:24px 0 80px}
+  .wall-head{display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+  .wall-head h3{font-size:26px;letter-spacing:-.02em;margin:0 0 4px}
+  .wall-head p{margin:0;color:var(--ink-soft);font-size:14.5px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input.search{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;font-size:14px;color:var(--ink);width:220px;font-family:inherit;
+  }
+  input.search::placeholder{color:var(--ink-soft)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px}
+  .chip{
+    border:1px solid var(--line);background:var(--card);color:var(--ink-soft);
+    border-radius:99px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:all .15s ease;
+  }
+  .chip[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#fff}
+  .chip:hover:not([aria-pressed="true"]){border-color:var(--ink-soft)}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+    gap:52px 30px;align-items:start;
+  }
+  .empty{color:var(--ink-soft);padding:40px 0;text-align:center;grid-column:1/-1}
+
+  /* each wall item: same hanging-badge design as the hero, smaller */
+  .hang-sm{position:relative;padding-top:58px}
+  .hang-sm .strap{top:-16px;width:18px;height:78px}
+  .hang-sm .strap.left{left:20%}
+  .hang-sm .strap.right{right:20%}
+  .hang-sm .strap::after{bottom:-16px;width:12px;height:22px;border-radius:6px}
+
+  .flipcard{
+    display:block;width:100%;border:none;background:none;padding:0;margin:0;
+    font:inherit;color:inherit;text-align:left;cursor:pointer;
+    perspective:1200px;position:relative;z-index:1;
+  }
+  .card3d{
+    position:relative;transform-style:preserve-3d;
+    transition:transform .55s ease;
+  }
+  @media (prefers-reduced-motion: reduce){ .card3d{transition:none} }
+  .flipcard.is-flipped .card3d{transform:rotateY(180deg)}
+  .face{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+  .face.front{position:relative}
+  .face.backside{
+    position:absolute;inset:0;transform:rotateY(180deg);
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:18px;overflow:auto;
+    display:flex;flex-direction:column;
+  }
+  .flipcard:hover .badge-sm{box-shadow:var(--shadow-lift);transform:translateY(-3px)}
+
+  /* scaled-down badge front */
+  .badge-sm{
+    background:var(--card);border-radius:16px;box-shadow:var(--shadow);
+    padding:18px 18px 14px;border:1px solid var(--line);position:relative;
+    transition:transform .18s ease, box-shadow .18s ease;
+    min-height:300px;display:flex;flex-direction:column;
+  }
+  .badge-sm .holes{display:flex;justify-content:space-between;padding:0 14%;margin-bottom:10px}
+  .badge-sm .hole{
+    width:11px;height:11px;border-radius:50%;
+    background:var(--ground);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+  }
+  .badge-sm .gsoc-line{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--ink-soft)}
+  .badge-sm .gsoc-mark{
+    width:14px;height:14px;flex-shrink:0;border-radius:3px;background:var(--orange);
+    color:#fff;display:grid;place-items:center;font-size:7px;font-weight:800;
+    font-family:ui-monospace,monospace;
+  }
+  .badge-sm .event{font-size:17px;line-height:1.12;letter-spacing:-.02em;font-weight:800;margin:10px 0 1px}
+  .badge-sm .city{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px}
+  .badge-sm .divider{height:1px;background:var(--line);margin:0 0 10px}
+  .badge-sm .person{font-size:17px;font-weight:800;letter-spacing:-.02em;margin:0;text-transform:lowercase;overflow-wrap:anywhere}
+  .badge-sm .org{font-size:12.5px;color:var(--ink-soft);margin:1px 0 0;overflow-wrap:anywhere}
+  .badge-sm .sigs{margin:10px 0 2px;min-height:24px;flex-grow:1}
+  .badge-sm .sigs .sig{font-size:15px;line-height:1.3;color:var(--ink);opacity:.85}
+  .badge-sm .sigs .sig.blue{color:var(--blue);opacity:.9}
+  .badge-sm .hexes{position:absolute;right:12px;bottom:44px;opacity:.9;width:56px;height:40px}
+  .badge-sm .role{text-align:center;color:var(--orange);font-weight:800;font-size:14px;margin-top:6px}
+  .badge-sm .fliphint{
+    position:absolute;bottom:10px;right:12px;font-size:9.5px;color:var(--ink-soft);
+    letter-spacing:.06em;text-transform:uppercase;
+  }
+  .sample-pill{
+    position:absolute;top:34px;right:12px;font-size:9px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);border:1px dashed var(--ink-soft);
+    border-radius:6px;padding:2px 7px;font-weight:700;
+  }
+  .is-sample .badge-sm{border-style:dashed;opacity:.7}
+  .is-sample .strap{opacity:.55}
+
+  /* back of badge: roadmap */
+  .backside .lbl{
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--orange);font-weight:700;margin:0 0 2px;
+  }
+  .backside .who{font-size:16px;font-weight:800;letter-spacing:-.01em;margin:0 0 12px;text-transform:lowercase}
+  .roadmap{list-style:none;margin:0 0 14px;padding:0 0 0 4px;flex-grow:1}
+  .roadmap li{
+    position:relative;padding:0 0 12px 18px;border-left:2px solid var(--line);
+    margin-left:6px;font-size:13px;line-height:1.4;
+  }
+  .roadmap li:last-child{padding-bottom:2px}
+  .roadmap li::before{
+    content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;
+    background:var(--amber);border:2px solid var(--card);
+  }
+  .roadmap li .yr{font-family:ui-monospace,monospace;font-size:11px;color:var(--orange);font-weight:700;display:block}
+  .roadmap li .what{font-weight:700}
+  .roadmap li .where{color:var(--ink-soft)}
+  .li-btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#0A66C2;color:#fff;
+    border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;
+    text-decoration:none;width:100%;
+  }
+  .li-btn:hover{filter:brightness(1.08)}
+  .backside .note{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;flex-grow:1}
+  .remove-x{
+    all:unset;cursor:pointer;font-size:11px;color:var(--red);margin-top:10px;text-align:center;
+  }
+
+  /* ---------- join / registration ---------- */
+  section.join{border-top:1px solid var(--line);padding:60px 0 70px}
+  section.join h3{font-size:28px;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance;text-align:center}
+  section.join .intro{max-width:56ch;margin:0 auto 30px;color:var(--ink-soft);text-align:center}
+  form.hang-form{
+    max-width:680px;margin:0 auto;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:28px;box-shadow:var(--shadow);
+    display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;
+  }
+  @media (max-width:560px){ form.hang-form{grid-template-columns:1fr} }
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field.full{grid-column:1/-1}
+  .field label, .roles-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
+  .field input, .field select, .role-row input, .role-row select{
+    background:var(--ground);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:14px;color:var(--ink);font-family:inherit;width:100%;
+  }
+  .field .hint{font-size:11.5px;color:var(--ink-soft)}
+  .roles-box{display:flex;flex-direction:column;gap:8px}
+  .role-row{display:grid;grid-template-columns:1.1fr 1.3fr .7fr 28px;gap:8px;align-items:center}
+  .role-row .rm{
+    all:unset;cursor:pointer;color:var(--ink-soft);font-size:15px;text-align:center;
+    width:28px;height:28px;border-radius:8px;
+  }
+  .role-row .rm:hover{color:var(--red)}
+  .add-role{
+    all:unset;cursor:pointer;color:var(--orange);font-size:13px;font-weight:700;margin-top:2px;
+  }
+  .add-role:hover{text-decoration:underline}
+  form.hang-form .btn{grid-column:1/-1;justify-content:center;border:none}
+  .form-note{grid-column:1/-1;font-size:12px;color:var(--ink-soft);text-align:center;margin:0}
+
+  footer.site{
+    border-top:1px solid var(--line);padding:26px 0 40px;
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    font-size:12.5px;color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<header class="site wrap">
+  <div class="wordmark"><span class="codechip">&lt;/&gt;</span> GSoC Alumni Badge Wall</div>
+  <div class="head-right">
+    <span class="disclaimer">Community project — not affiliated with Google</span>
+    <a class="gh-link" href="https://github.com/saiudayagiri/gsoc-alumni-wall" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<section class="hero wrap">
+  <div>
+    <p class="eyebrow">Google Summer of Code · Alumni Community</p>
+    <h1>Every badge<br>tells a <span class="accent">summer's</span> story.</h1>
+    <p class="lede">
+      A living wall of conference badges from Summer of Code alumni around the world.
+      Hang your badge, flip anyone's card to see their GSoC roadmap, and open their
+      LinkedIn to connect.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#wall">Browse the wall</a>
+      <a class="btn btn-ghost" href="#join">Hang your badge</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b id="stat-count">1</b><span>Badges hung</span></div>
+      <div class="stat"><b id="stat-orgs">1</b><span>Orgs</span></div>
+      <div class="stat"><b>2026</b><span>Latest camp</span></div>
+    </div>
+  </div>
+
+  <!-- featured badge: sai udayagiri, rebuilt from the photo; links to LinkedIn -->
+  <div class="lanyard-zone">
+    <div class="hang">
+      <div class="strap left"></div>
+      <div class="strap right"></div>
+      <a class="badge-link" href="https://www.linkedin.com/in/sai-udayagiri/" target="_blank" rel="noopener noreferrer" aria-label="sai udayagiri on LinkedIn">
+        <article class="badge">
+          <div class="holes"><span class="hole"></span><span class="hole"></span></div>
+          <div class="gsoc-line"><span class="gsoc-mark">&lt;/&gt;</span> Google Summer of Code</div>
+          <h2 class="event">Alumni CAMP<br>India 2026</h2>
+          <p class="city">Delhi</p>
+          <div class="divider"></div>
+          <p class="person">sai udayagiri</p>
+          <p class="org">Sympy</p>
+          <div class="sigs">
+            <div class="sig script">Amanda Casaci</div>
+            <div class="sig script blue">Stephanie Taylor</div>
+          </div>
+          <svg class="hexes" width="84" height="60" viewBox="0 0 84 60" aria-hidden="true">
+            <polygon points="14,4 24,10 24,22 14,28 4,22 4,10" fill="#E8710A"/>
+            <polygon points="44,0 52,5 52,15 44,20 36,15 36,5" fill="#D93025"/>
+            <polygon points="70,12 79,17 79,28 70,33 61,28 61,17" fill="#188038" opacity=".9"/>
+            <polygon points="30,34 39,39 39,50 30,55 21,50 21,39" fill="#1A73E8" opacity=".85"/>
+            <polygon points="60,38 68,43 68,52 60,57 52,52 52,43" fill="#F9AB00"/>
+          </svg>
+          <p class="role">Attendee</p>
+        </article>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="wall wrap" id="wall">
+  <div class="wall-head">
+    <div>
+      <h3>The wall</h3>
+      <p>Flip a badge to see the alum's GSoC roadmap — the LinkedIn link is on the back.</p>
+    </div>
+    <div class="controls">
+      <input class="search" id="search" type="search" placeholder="Search name, org, city…" aria-label="Search alumni">
+    </div>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Filter by event year"></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section class="join wrap" id="join">
+  <h3>Were you there? Hang your badge.</h3>
+  <p class="intro">
+    Fill in the front of your badge, add every role from your GSoC roadmap —
+    contributor years, mentor years, org admin — and link your LinkedIn.
+    The roadmap goes on the back of your card.
+  </p>
+  <form class="hang-form" id="hang-form" novalidate>
+    <div class="field">
+      <label for="f-name">Full name *</label>
+      <input id="f-name" name="name" required autocomplete="name" placeholder="sai udayagiri">
+    </div>
+    <div class="field">
+      <label for="f-linkedin">LinkedIn *</label>
+      <input id="f-linkedin" name="linkedin" required placeholder="linkedin.com/in/your-id or just your-id">
+    </div>
+    <div class="field">
+      <label for="f-event">Event on your badge</label>
+      <input id="f-event" name="event" placeholder="Alumni CAMP India 2026">
+    </div>
+    <div class="field">
+      <label for="f-city">City</label>
+      <input id="f-city" name="city" placeholder="Delhi">
+    </div>
+    <div class="field">
+      <label for="f-year">Badge year</label>
+      <input id="f-year" name="year" inputmode="numeric" maxlength="4" placeholder="2026">
+    </div>
+    <div class="field">
+      <label for="f-role">Badge role</label>
+      <select id="f-role" name="role">
+        <option>Attendee</option>
+        <option>Mentor</option>
+        <option>Org Admin</option>
+        <option>Speaker</option>
+      </select>
+    </div>
+    <div class="field full">
+      <span class="roles-label">Your GSoC roadmap * <span style="text-transform:none;font-weight:400">(shown on the back of your card)</span></span>
+      <div class="roles-box" id="roles-box"></div>
+      <button type="button" class="add-role" id="add-role">+ Add another role</button>
+      <span class="hint">One row per role — e.g. Contributor · SymPy · 2025, then Mentor · SymPy · 2026.</span>
+    </div>
+    <button class="btn btn-primary" type="submit">Hang my badge</button>
+    <p class="form-note">Your badge is added to the shared wall — everyone with the link sees it.</p>
+  </form>
+</section>
+
+<footer class="site wrap">
+  <span>Started by sai udayagiri · GSoC alum, Sympy</span>
+  <span>Found a bug or have an idea? <a href="https://github.com/saiudayagiri/gsoc-alumni-wall" target="_blank" rel="noopener noreferrer">Open an issue or PR on GitHub</a></span>
+  <span>An unofficial community project. "Google Summer of Code" belongs to Google LLC.</span>
+</footer>
+
+<script>
+  const ROLES = ["Contributor","Mentor","Org Admin","Speaker","Attendee"];
+
+  const seed = [
+    {
+      id:"founder",
+      name:"sai udayagiri", org:"Sympy", event:"Alumni CAMP India 2026", city:"Delhi",
+      year:"2026", role:"Attendee", founder:true,
+      linkedin:"sai-udayagiri",
+      sigs:["Amanda Casaci","Stephanie Taylor"],
+      roadmap:[
+        {role:"Contributor", org:"SymPy", year:"2025"},
+        {role:"Attendee", org:"Alumni CAMP India, Delhi", year:"2026"}
+      ]
+    },
+    {
+      id:"dummy-1", sample:true,
+      name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
+      year:"", role:"Attendee", linkedin:"",
+      roadmap:[{role:"Contributor", org:"your org", year:"20xx"}]
+    },
+    {
+      id:"dummy-2", sample:true,
+      name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
+      year:"", role:"Mentor", linkedin:"",
+      roadmap:[{role:"Mentor", org:"your org", year:"20xx"}]
+    },
+    {
+      id:"dummy-3", sample:true,
+      name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
+      year:"", role:"Attendee", linkedin:"",
+      roadmap:[{role:"Contributor", org:"your org", year:"20xx"}]
+    }
+  ];
+
+  const API = "/api/badges";
+  let apiMode = false;          // true once the shared API responds
+  let saved = loadLocal();      // local fallback when the API is unreachable
+  let community = [];           // shared badges from the API
+  let alumni = [...seed, ...saved];
+
+  function loadLocal(){
+    try{ return JSON.parse(localStorage.getItem("gsoc-wall-badges")) || []; }
+    catch(e){ return []; }
+  }
+  function myIds(){
+    try{ return JSON.parse(localStorage.getItem("gsoc-wall-mine")) || []; }
+    catch(e){ return []; }
+  }
+  function rememberMine(id){
+    localStorage.setItem("gsoc-wall-mine", JSON.stringify([...myIds(), id]));
+  }
+  function rebuild(){
+    const extra = apiMode ? community : saved;
+    // real badges first (founder, then community), dummies last
+    alumni = [seed[0], ...extra, ...seed.slice(1)];
+  }
+
+  async function syncFromApi(){
+    try{
+      const res = await fetch(API, {cache:"no-store"});
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+      community = (data.badges || []).map(b => ({...b, community:true}));
+      apiMode = true;
+      rebuild(); buildChips(); render(); updateStats();
+    }catch(e){ /* no API here (offline/preview) — stay on local storage */ }
+  }
+
+  const grid = document.getElementById("grid");
+  const chipsEl = document.getElementById("chips");
+  const searchEl = document.getElementById("search");
+  let activeYear = "All";
+
+  function buildChips(){
+    chipsEl.innerHTML = "";
+    const years = ["All", ...[...new Set(alumni.map(a => a.year).filter(y => /^\d{4}$/.test(y)))].sort().reverse()];
+    if(!years.includes(activeYear)) activeYear = "All";
+    years.forEach(y => {
+      const b = document.createElement("button");
+      b.className = "chip"; b.textContent = y;
+      b.setAttribute("aria-pressed", String(y === activeYear));
+      b.addEventListener("click", () => {
+        activeYear = y;
+        chipsEl.querySelectorAll(".chip").forEach(c =>
+          c.setAttribute("aria-pressed", String(c.textContent === y)));
+        render();
+      });
+      chipsEl.appendChild(b);
+    });
+  }
+
+  function linkedinUrl(v){
+    if(!v) return "";
+    v = v.trim().replace(/^https?:\/\//,"").replace(/^www\./,"");
+    if(v.startsWith("linkedin.com")) return "https://www." + v;
+    return "https://www.linkedin.com/in/" + encodeURIComponent(v.replace(/^in\//,"").replace(/\/+$/,""));
+  }
+
+  function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  const HEXES = `<svg class="hexes" viewBox="0 0 84 60" aria-hidden="true">
+    <polygon points="14,4 24,10 24,22 14,28 4,22 4,10" fill="#E8710A"/>
+    <polygon points="44,0 52,5 52,15 44,20 36,15 36,5" fill="#D93025"/>
+    <polygon points="70,12 79,17 79,28 70,33 61,28 61,17" fill="#188038" opacity=".9"/>
+    <polygon points="30,34 39,39 39,50 30,55 21,50 21,39" fill="#1A73E8" opacity=".85"/>
+    <polygon points="60,38 68,43 68,52 60,57 52,52 52,43" fill="#F9AB00"/>
+  </svg>`;
+
+  function badgeFront(a){
+    const sigs = (a.sigs || []).map((s,i) =>
+      `<div class="sig script${i===1?" blue":""}">${esc(s)}</div>`).join("");
+    return `
+      <article class="badge-sm face front">
+        <div class="holes"><span class="hole"></span><span class="hole"></span></div>
+        <div class="gsoc-line"><span class="gsoc-mark">&lt;/&gt;</span> Google Summer of Code</div>
+        ${a.sample ? '<span class="sample-pill">Sample</span>' : ""}
+        <p class="event">${esc(a.event)}</p>
+        <p class="city">${esc(a.city)}</p>
+        <div class="divider"></div>
+        <p class="person">${esc(a.name)}</p>
+        <p class="org">${esc(a.org)}</p>
+        <div class="sigs">${sigs}</div>
+        ${HEXES}
+        <p class="role">${esc(a.role)}</p>
+        <span class="fliphint">flip ↻</span>
+      </article>`;
+  }
+
+  function badgeBack(a){
+    if(a.sample){
+      return `
+        <div class="face backside">
+          <p class="lbl">Back of badge</p>
+          <p class="who">reserved for you</p>
+          <p class="note">This spot is waiting for a real alum. Hang your badge below and your
+          GSoC roadmap — contributor years, mentor years, orgs — will show up right here.</p>
+          <a class="li-btn" style="background:var(--orange)" href="#join" data-join>Hang your badge ↓</a>
+        </div>`;
+    }
+    const steps = (a.roadmap || []).map(r => `
+      <li>
+        <span class="yr">${esc(r.year)}</span>
+        <span class="what">${esc(r.role)}</span> <span class="where">· ${esc(r.org)}</span>
+      </li>`).join("");
+    const removable = a.community && (!apiMode || myIds().includes(a.id));
+    return `
+      <div class="face backside">
+        <p class="lbl">GSoC roadmap</p>
+        <p class="who">${esc(a.name)}</p>
+        <ul class="roadmap">${steps || '<li><span class="what">GSoC alum</span></li>'}</ul>
+        ${a.linkedin ? `<a class="li-btn" href="${esc(linkedinUrl(a.linkedin))}" target="_blank" rel="noopener noreferrer" data-li>in · View LinkedIn profile →</a>` : ""}
+        ${removable ? '<button class="remove-x" data-remove>Take this badge down</button>' : ""}
+      </div>`;
+  }
+
+  function render(){
+    const q = searchEl.value.trim().toLowerCase();
+    const list = alumni.filter(a =>
+      (activeYear === "All" || a.year === activeYear) &&
+      (!q || [a.name, a.org, a.city, a.event,
+              ...(a.roadmap || []).map(r => r.org + " " + r.role)]
+        .join(" ").toLowerCase().includes(q))
+    );
+    grid.innerHTML = "";
+    if(!list.length){
+      grid.innerHTML = '<p class="empty">No badges match — try another name, org, or year.</p>';
+      return;
+    }
+    list.forEach(a => {
+      const item = document.createElement("div");
+      item.className = "hang-sm" + (a.sample ? " is-sample" : "");
+      item.innerHTML = `
+        <div class="strap left"></div>
+        <div class="strap right"></div>
+        <div class="flipcard" role="button" tabindex="0"
+             aria-label="Badge of ${esc(a.name)}, ${esc(a.org)} — activate to flip">
+          <div class="card3d">
+            ${badgeFront(a)}
+            ${badgeBack(a)}
+          </div>
+        </div>`;
+      const card = item.querySelector(".flipcard");
+      const flip = () => card.classList.toggle("is-flipped");
+      card.addEventListener("click", e => {
+        if(e.target.closest("[data-li]")) return;            // let LinkedIn open
+        if(e.target.closest("[data-join]")){                 // scroll to form
+          card.classList.remove("is-flipped");
+          return;
+        }
+        if(e.target.closest("[data-remove]")){ removeBadge(a); return; }
+        flip();
+      });
+      card.addEventListener("keydown", e => {
+        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); }
+      });
+      grid.appendChild(item);
+    });
+  }
+
+  async function removeBadge(a){
+    if(apiMode){
+      try{ await fetch(`${API}?id=${encodeURIComponent(a.id)}`, {method:"DELETE"}); }catch(e){}
+      community = community.filter(s => s.id !== a.id);
+    }else{
+      saved = saved.filter(s => s.id !== a.id);
+      localStorage.setItem("gsoc-wall-badges", JSON.stringify(saved));
+    }
+    rebuild(); buildChips(); render(); updateStats();
+  }
+
+  /* ---------- roadmap rows in the form ---------- */
+  const rolesBox = document.getElementById("roles-box");
+  function addRoleRow(first){
+    if(rolesBox.children.length >= 8) return;
+    const row = document.createElement("div");
+    row.className = "role-row";
+    row.innerHTML = `
+      <select aria-label="Role">${ROLES.map(r => `<option>${r}</option>`).join("")}</select>
+      <input aria-label="Org" placeholder="Org (e.g. SymPy)"${first ? " required" : ""}>
+      <input aria-label="Year" placeholder="Year" inputmode="numeric" maxlength="4">
+      ${first ? "<span></span>" : '<button type="button" class="rm" aria-label="Remove role">✕</button>'}`;
+    const rm = row.querySelector(".rm");
+    if(rm) rm.addEventListener("click", () => row.remove());
+    rolesBox.appendChild(row);
+  }
+  addRoleRow(true);
+  document.getElementById("add-role").addEventListener("click", () => addRoleRow(false));
+
+  document.getElementById("hang-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target;
+    const name = f.name.value.trim(), li = f.linkedin.value.trim();
+    const roadmap = [...rolesBox.querySelectorAll(".role-row")].map(row => {
+      const [sel, orgIn, yrIn] = row.querySelectorAll("select, input");
+      return {role: sel.value, org: orgIn.value.trim(), year: yrIn.value.trim()};
+    }).filter(r => r.org || r.year);
+    if(!name || !li || !roadmap.length || !roadmap[0].org){
+      f.reportValidity();
+      if(name && li) alert("Add at least one roadmap row with your org.");
+      return;
+    }
+    const entry = {
+      name, linkedin: li,
+      org: roadmap[0].org,
+      event: f.event.value.trim() || "GSoC Alumni",
+      city: f.city.value.trim() || "—",
+      year: f.year.value.trim() || String(new Date().getFullYear()),
+      role: f.role.value,
+      roadmap
+    };
+    const submitBtn = f.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.textContent = "Hanging…";
+    try{
+      if(apiMode){
+        const res = await fetch(API, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(entry)
+        });
+        if(!res.ok) throw new Error("save failed");
+        const {badge} = await res.json();
+        rememberMine(badge.id);
+        community.push({...badge, community:true});
+      }else{
+        const local = {...entry, id:"local-"+Date.now(), community:true};
+        saved.push(local);
+        localStorage.setItem("gsoc-wall-badges", JSON.stringify(saved));
+      }
+      rebuild();
+      f.reset();
+      rolesBox.innerHTML = ""; addRoleRow(true);
+      activeYear = "All"; searchEl.value = "";
+      buildChips(); render(); updateStats();
+      document.getElementById("wall").scrollIntoView({behavior:"smooth"});
+    }catch(err){
+      alert("Couldn't hang your badge right now — please try again.");
+    }finally{
+      submitBtn.disabled = false; submitBtn.textContent = "Hang my badge";
+    }
+  });
+
+  function updateStats(){
+    const real = alumni.filter(a => !a.sample);
+    document.getElementById("stat-count").textContent = real.length;
+    const orgs = new Set();
+    real.forEach(a => {
+      if(a.org) orgs.add(a.org.toLowerCase());
+      (a.roadmap || []).forEach(r => r.org && orgs.add(r.org.toLowerCase()));
+    });
+    document.getElementById("stat-orgs").textContent = orgs.size;
+  }
+
+  searchEl.addEventListener("input", render);
+  buildChips(); render(); updateStats();
+  syncFromApi();
+</script>
+</body>
+</html>
