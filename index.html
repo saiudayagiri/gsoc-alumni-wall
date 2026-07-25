@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GSoC Alumni Badge Wall</title>
-<meta name="description" content="A community wall of Google Summer of Code alumni conference badges — flip a badge to see the alum's GSoC roadmap and LinkedIn.">
+<meta name="description" content="A community wall of Google Summer of Code alumni conference badges — flip a badge to see the alum's GSoC roadmap, project, and socials.">
 <style>
   :root{
     --orange:#E8710A;
@@ -79,11 +79,11 @@
     display:grid;place-items:center;font-size:13px;font-weight:800;
     font-family:ui-monospace,monospace;flex-shrink:0;
   }
+  .head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .disclaimer{
     font-size:12px;color:var(--ink-soft);
     border:1px solid var(--line);border-radius:99px;padding:5px 14px;
   }
-  .head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .gh-link{
     display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
     color:var(--ink);text-decoration:none;border:1px solid var(--line);
@@ -91,6 +91,18 @@
   }
   .gh-link:hover{border-color:var(--ink-soft)}
   .gh-link svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+  .me-chip{
+    display:none;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+    color:var(--ink);background:var(--card);border:1px solid var(--amber);
+    border-radius:99px;padding:5px 8px 5px 14px;max-width:280px;
+  }
+  .me-chip.on{display:inline-flex}
+  .me-chip .me-mail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .me-chip button{
+    all:unset;cursor:pointer;color:var(--ink-soft);font-size:13px;
+    width:20px;height:20px;text-align:center;border-radius:50%;
+  }
+  .me-chip button:hover{color:var(--red)}
   footer.site a{color:inherit;font-weight:600}
 
   /* ---------- hero ---------- */
@@ -114,7 +126,7 @@
     display:inline-flex;align-items:center;gap:8px;
     border-radius:10px;padding:12px 22px;font-size:15px;font-weight:700;
     cursor:pointer;border:1px solid transparent;text-decoration:none;
-    transition:transform .15s ease, box-shadow .15s ease;
+    transition:transform .15s ease, box-shadow .15s ease;font-family:inherit;
   }
   .btn:focus-visible, .chip:focus-visible, .flipcard:focus-visible,
   input:focus-visible, select:focus-visible, button:focus-visible{
@@ -233,8 +245,8 @@
   .face.backside{
     position:absolute;inset:0;transform:rotateY(180deg);
     background:var(--card);border:1px solid var(--line);border-radius:16px;
-    box-shadow:var(--shadow);padding:18px;overflow:auto;
-    display:flex;flex-direction:column;
+    box-shadow:var(--shadow);padding:16px;
+    display:flex;flex-direction:column;gap:10px;
   }
   /* the hidden face must never intercept clicks meant for the visible one */
   .flipcard .face.backside{pointer-events:none}
@@ -247,7 +259,7 @@
     background:var(--card);border-radius:16px;box-shadow:var(--shadow);
     padding:18px 18px 14px;border:1px solid var(--line);position:relative;
     transition:transform .18s ease, box-shadow .18s ease;
-    min-height:300px;display:flex;flex-direction:column;
+    min-height:310px;display:flex;flex-direction:column;
   }
   .badge-sm .holes{display:flex;justify-content:space-between;padding:0 14%;margin-bottom:10px}
   .badge-sm .hole{
@@ -261,7 +273,7 @@
     font-family:ui-monospace,monospace;
   }
   .badge-sm .event{font-size:17px;line-height:1.12;letter-spacing:-.02em;font-weight:800;margin:10px 0 1px}
-  .badge-sm .city{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px}
+  .badge-sm .city{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;min-height:19px}
   .badge-sm .divider{height:1px;background:var(--line);margin:0 0 10px}
   .badge-sm .person{font-size:17px;font-weight:800;letter-spacing:-.02em;margin:0;text-transform:lowercase;overflow-wrap:anywhere}
   .badge-sm .org{font-size:12.5px;color:var(--ink-soft);margin:1px 0 0;overflow-wrap:anywhere}
@@ -282,66 +294,119 @@
   .is-sample .badge-sm{border-style:dashed;opacity:.7}
   .is-sample .strap{opacity:.55}
 
-  /* back of badge: roadmap */
-  .backside .lbl{
-    font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--orange);font-weight:700;margin:0 0 2px;
+  /* back of badge: photo, roadmap, project, socials */
+  .bk-head{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .avatar{
+    width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;
+    border:2px solid var(--amber);background:var(--ground);
   }
-  .backside .who{font-size:16px;font-weight:800;letter-spacing:-.01em;margin:0 0 12px;text-transform:lowercase}
-  .roadmap{list-style:none;margin:0 0 14px;padding:0 0 0 4px;flex-grow:1}
+  .avatar-txt{
+    display:grid;place-items:center;font-weight:800;font-size:15px;
+    color:var(--orange);text-transform:lowercase;
+  }
+  .bk-id{min-width:0}
+  .bk-id .who{font-size:15px;font-weight:800;letter-spacing:-.01em;margin:0;text-transform:lowercase;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bk-id .bk-sub{font-size:11.5px;color:var(--ink-soft);margin:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bk-scroll{flex:1;min-height:0;overflow-y:auto;padding-right:4px}
+  .bk-lbl{
+    font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--orange);font-weight:700;margin:0 0 6px;
+  }
+  .roadmap{list-style:none;margin:0;padding:0 0 0 4px}
   .roadmap li{
-    position:relative;padding:0 0 12px 18px;border-left:2px solid var(--line);
-    margin-left:6px;font-size:13px;line-height:1.4;
+    position:relative;padding:0 0 10px 16px;border-left:2px solid var(--line);
+    margin-left:5px;font-size:12.5px;line-height:1.35;
   }
   .roadmap li:last-child{padding-bottom:2px}
   .roadmap li::before{
-    content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;
+    content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;
     background:var(--amber);border:2px solid var(--card);
   }
-  .roadmap li .yr{font-family:ui-monospace,monospace;font-size:11px;color:var(--orange);font-weight:700;display:block}
+  .roadmap li .yr{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--orange);font-weight:700;display:block}
   .roadmap li .what{font-weight:700}
   .roadmap li .where{color:var(--ink-soft)}
-  .li-btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#0A66C2;color:#fff;
-    border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;
-    text-decoration:none;width:100%;
+  .gsoc-chip{
+    display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
+    font-size:11.5px;font-weight:700;color:var(--orange);text-decoration:none;
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px;
   }
-  .li-btn:hover{filter:brightness(1.08)}
-  .backside .note{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;flex-grow:1}
-  .remove-x{
-    all:unset;cursor:pointer;font-size:11px;color:var(--red);margin-top:10px;text-align:center;
+  .gsoc-chip:hover{border-color:var(--orange)}
+  .socialrow{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+  .soc{
+    width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    font-size:11px;font-weight:800;color:#fff;text-decoration:none;
+    font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
   }
+  .soc svg{width:15px;height:15px;fill:currentColor}
+  .soc.p-linkedin{background:#0A66C2}
+  .soc.p-github{background:#24292f}
+  .soc.p-x{background:#000}
+  .soc.p-instagram{background:#C13584}
+  .soc.p-youtube{background:#FF0000}
+  .soc.p-mastodon{background:#6364FF}
+  .soc.p-website{background:var(--green)}
+  .ownrow{display:flex;gap:14px;flex-shrink:0;border-top:1px solid var(--line);padding-top:8px}
+  .ownrow button{
+    all:unset;cursor:pointer;font-size:11.5px;font-weight:700;
+  }
+  .ownrow .edit-b{color:var(--blue)}
+  .ownrow .del-b{color:var(--red)}
+  .backside .note{font-size:12.5px;color:var(--ink-soft);margin:0;flex:1}
 
   /* ---------- join / registration ---------- */
   section.join{border-top:1px solid var(--line);padding:60px 0 70px}
   section.join h3{font-size:28px;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance;text-align:center}
-  section.join .intro{max-width:56ch;margin:0 auto 30px;color:var(--ink-soft);text-align:center}
+  section.join .intro{max-width:56ch;margin:0 auto 24px;color:var(--ink-soft);text-align:center}
+  .edit-bar{
+    max-width:680px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    justify-content:center;font-size:13.5px;color:var(--ink-soft);
+  }
+  .edit-bar input{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;font-size:13.5px;color:var(--ink);font-family:inherit;width:230px;
+  }
+  .edit-bar .btn{padding:9px 16px;font-size:13.5px}
   form.hang-form{
     max-width:680px;margin:0 auto;background:var(--card);border:1px solid var(--line);
     border-radius:18px;padding:28px;box-shadow:var(--shadow);
     display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;
   }
+  form.hang-form.editing{border-color:var(--amber)}
   @media (max-width:560px){ form.hang-form{grid-template-columns:1fr} }
   .field{display:flex;flex-direction:column;gap:5px}
   .field.full{grid-column:1/-1}
-  .field label, .roles-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
-  .field input, .field select, .role-row input, .role-row select{
+  .field label, .rows-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
+  .field input, .field select, .row-line input, .row-line select{
     background:var(--ground);border:1px solid var(--line);border-radius:10px;
     padding:10px 12px;font-size:14px;color:var(--ink);font-family:inherit;width:100%;
   }
+  .field input[type="file"]{padding:8px 10px;font-size:12.5px}
   .field .hint{font-size:11.5px;color:var(--ink-soft)}
-  .roles-box{display:flex;flex-direction:column;gap:8px}
-  .role-row{display:grid;grid-template-columns:1.1fr 1.3fr .7fr 28px;gap:8px;align-items:center}
-  .role-row .rm{
+  .rows-box{display:flex;flex-direction:column;gap:8px}
+  .row-line{display:grid;gap:8px;align-items:center}
+  .row-line.r-road{grid-template-columns:1.1fr 1.3fr .7fr 28px}
+  .row-line.r-soc{grid-template-columns:1fr 1.9fr 28px}
+  .row-line .rm{
     all:unset;cursor:pointer;color:var(--ink-soft);font-size:15px;text-align:center;
     width:28px;height:28px;border-radius:8px;
   }
-  .role-row .rm:hover{color:var(--red)}
-  .add-role{
-    all:unset;cursor:pointer;color:var(--orange);font-size:13px;font-weight:700;margin-top:2px;
+  .row-line .rm:hover{color:var(--red)}
+  .add-row{all:unset;cursor:pointer;color:var(--orange);font-size:13px;font-weight:700;margin-top:2px}
+  .add-row:hover{text-decoration:underline}
+  .photo-preview{
+    width:52px;height:52px;border-radius:50%;object-fit:cover;
+    border:2px solid var(--amber);display:none;
   }
-  .add-role:hover{text-decoration:underline}
+  .photo-preview.on{display:block}
   form.hang-form .btn{grid-column:1/-1;justify-content:center;border:none}
+  .cancel-edit{
+    all:unset;cursor:pointer;grid-column:1/-1;text-align:center;
+    font-size:13px;color:var(--ink-soft);display:none;
+  }
+  .cancel-edit.on{display:block}
+  .cancel-edit:hover{color:var(--red)}
   .form-note{grid-column:1/-1;font-size:12px;color:var(--ink-soft);text-align:center;margin:0}
 
   footer.site{
@@ -356,6 +421,7 @@
 <header class="site wrap">
   <div class="wordmark"><span class="codechip">&lt;/&gt;</span> GSoC Alumni Badge Wall</div>
   <div class="head-right">
+    <span class="me-chip" id="me-chip"><span class="me-mail" id="me-mail"></span><button id="me-out" aria-label="Sign out" title="Sign out">✕</button></span>
     <span class="disclaimer">Community project — not affiliated with Google</span>
     <a class="gh-link" href="https://github.com/saiudayagiri/gsoc-alumni-wall" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -370,8 +436,8 @@
     <h1>Every badge<br>tells a <span class="accent">summer's</span> story.</h1>
     <p class="lede">
       A living wall of conference badges from Summer of Code alumni around the world.
-      Hang your badge, flip anyone's card to see their GSoC roadmap, and open their
-      LinkedIn to connect.
+      Hang your badge, flip anyone's card to see their GSoC roadmap and project,
+      and connect on their socials.
     </p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="#wall">Browse the wall</a>
@@ -420,7 +486,7 @@
   <div class="wall-head">
     <div>
       <h3>The wall</h3>
-      <p>Flip a badge to see the alum's GSoC roadmap — the LinkedIn link is on the back.</p>
+      <p>Flip a badge to see the alum's roadmap, GSoC project, and socials.</p>
     </div>
     <div class="controls">
       <input class="search" id="search" type="search" placeholder="Search name, org, city…" aria-label="Search alumni">
@@ -431,16 +497,30 @@
 </section>
 
 <section class="join wrap" id="join">
-  <h3>Were you there? Hang your badge.</h3>
+  <h3 id="join-title">Were you there? Hang your badge.</h3>
   <p class="intro">
-    Fill in the front of your badge, add every role from your GSoC roadmap —
-    contributor years, mentor years, org admin — and link your LinkedIn.
-    The roadmap goes on the back of your card.
+    Fill in the front of your badge, add your GSoC project URL and every role from
+    your roadmap, and link the socials you want on the back of your card.
   </p>
+  <div class="edit-bar">
+    <span>Already on the wall?</span>
+    <input id="edit-email" type="email" placeholder="email you registered with" aria-label="Email to load your badge">
+    <button class="btn btn-ghost" id="edit-load" type="button">Edit my badge</button>
+  </div>
   <form class="hang-form" id="hang-form" novalidate>
     <div class="field">
       <label for="f-name">Full name *</label>
       <input id="f-name" name="name" required autocomplete="name" placeholder="sai udayagiri">
+    </div>
+    <div class="field">
+      <label for="f-email">Email *</label>
+      <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com">
+      <span class="hint">Only used to let you edit your badge later — never shown or stored in plain text.</span>
+    </div>
+    <div class="field full">
+      <label for="f-gsoc">GSoC project URL *</label>
+      <input id="f-gsoc" name="gsocUrl" required placeholder="https://summerofcode.withgoogle.com/…/projects/…">
+      <span class="hint">Your unique project URL from summerofcode.withgoogle.com — one badge per project.</span>
     </div>
     <div class="field">
       <label for="f-linkedin">LinkedIn *</label>
@@ -448,15 +528,7 @@
     </div>
     <div class="field">
       <label for="f-event">Event on your badge</label>
-      <input id="f-event" name="event" placeholder="Alumni CAMP India 2026">
-    </div>
-    <div class="field">
-      <label for="f-city">City</label>
-      <input id="f-city" name="city" placeholder="Delhi">
-    </div>
-    <div class="field">
-      <label for="f-year">Badge year</label>
-      <input id="f-year" name="year" inputmode="numeric" maxlength="4" placeholder="2026">
+      <select id="f-event" name="event"></select>
     </div>
     <div class="field">
       <label for="f-role">Badge role</label>
@@ -465,15 +537,34 @@
         <option>Mentor</option>
         <option>Org Admin</option>
         <option>Speaker</option>
+        <option>GSoCer</option>
       </select>
     </div>
-    <div class="field full">
-      <span class="roles-label">Your GSoC roadmap * <span style="text-transform:none;font-weight:400">(shown on the back of your card)</span></span>
-      <div class="roles-box" id="roles-box"></div>
-      <button type="button" class="add-role" id="add-role">+ Add another role</button>
-      <span class="hint">One row per role — e.g. Contributor · SymPy · 2025, then Mentor · SymPy · 2026.</span>
+    <div class="field">
+      <label for="f-year">Badge year</label>
+      <input id="f-year" name="year" inputmode="numeric" maxlength="4" placeholder="2026">
     </div>
-    <button class="btn btn-primary" type="submit">Hang my badge</button>
+    <div class="field full">
+      <span class="rows-label">Your GSoC roadmap * <span style="text-transform:none;font-weight:400">(shown on the back of your card)</span></span>
+      <div class="rows-box" id="roles-box"></div>
+      <button type="button" class="add-row" id="add-role">+ Add another role</button>
+      <span class="hint">One row per role — e.g. Contributor · SymPy · 2025, then Mentor · another org · 2026.</span>
+    </div>
+    <div class="field full">
+      <span class="rows-label">More socials <span style="text-transform:none;font-weight:400">(optional)</span></span>
+      <div class="rows-box" id="socials-box"></div>
+      <button type="button" class="add-row" id="add-social">+ Add a social link</button>
+    </div>
+    <div class="field full">
+      <label for="f-photo">Profile photo (optional)</label>
+      <div style="display:flex;gap:12px;align-items:center">
+        <img class="photo-preview" id="photo-preview" alt="Photo preview">
+        <input id="f-photo" name="photo" type="file" accept="image/*" style="flex:1">
+      </div>
+      <span class="hint">Shown on the back of your card.</span>
+    </div>
+    <button class="btn btn-primary" type="submit" id="submit-btn">Hang my badge</button>
+    <button class="cancel-edit" type="button" id="cancel-edit">Cancel editing — register a new badge instead</button>
     <p class="form-note">Your badge is added to the shared wall — everyone with the link sees it.</p>
   </form>
 </section>
@@ -486,6 +577,19 @@
 
 <script>
   const ROLES = ["Contributor","Mentor","Org Admin","Speaker","Attendee"];
+  const EVENTS = [
+    {label:"Alumni CAMP India 2026 — Delhi", event:"Alumni CAMP India 2026", city:"Delhi"},
+    {label:"Alumni CAMP India 2026 — Bengaluru", event:"Alumni CAMP India 2026", city:"Bengaluru"},
+    {label:"GSoC alum — no event yet", event:"GSoC Alumni", city:"", none:true}
+  ];
+  const PLATFORMS = {
+    "GitHub":    {base:"https://github.com/",     mark:"GH"},
+    "X":         {base:"https://x.com/",          mark:"𝕏"},
+    "Instagram": {base:"https://instagram.com/",  mark:"IG"},
+    "YouTube":   {base:"https://youtube.com/",    mark:"▶"},
+    "Mastodon":  {base:"",                        mark:"M"},
+    "Website":   {base:"",                        mark:"W"}
+  };
 
   const seed = [
     {
@@ -493,6 +597,9 @@
       name:"sai udayagiri", org:"Sympy", event:"Alumni CAMP India 2026", city:"Delhi",
       year:"2026", role:"Attendee", founder:true,
       linkedin:"sai-udayagiri",
+      gsocUrl:"https://summerofcode.withgoogle.com/myprojects/details/K6y23OZP",
+      photo:"",
+      socials:[{platform:"GitHub", url:"github.com/saiudayagiri"}],
       sigs:["Amanda Casaci","Stephanie Taylor"],
       roadmap:[
         {role:"Contributor", org:"SymPy", year:"2025"},
@@ -502,7 +609,7 @@
     {
       id:"dummy-1", sample:true,
       name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
-      year:"", role:"Attendee", linkedin:"",
+      year:"", role:"GSoCer", linkedin:"",
       roadmap:[{role:"Contributor", org:"your org", year:"20xx"}]
     },
     {
@@ -510,12 +617,6 @@
       name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
       year:"", role:"Mentor", linkedin:"",
       roadmap:[{role:"Mentor", org:"your org", year:"20xx"}]
-    },
-    {
-      id:"dummy-3", sample:true,
-      name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
-      year:"", role:"Attendee", linkedin:"",
-      roadmap:[{role:"Contributor", org:"your org", year:"20xx"}]
     }
   ];
 
@@ -523,7 +624,9 @@
   let apiMode = false;          // true once the shared API responds
   let saved = loadLocal();      // local fallback when the API is unreachable
   let community = [];           // shared badges from the API
-  let alumni = [...seed, ...saved];
+  let alumni = [];
+  let editingId = null;         // id being edited, null = registering
+  let photoData = "";           // resized data-url pending upload
 
   function loadLocal(){
     try{ return JSON.parse(localStorage.getItem("gsoc-wall-badges")) || []; }
@@ -534,8 +637,26 @@
     catch(e){ return []; }
   }
   function rememberMine(id){
-    localStorage.setItem("gsoc-wall-mine", JSON.stringify([...myIds(), id]));
+    if(!myIds().includes(id))
+      localStorage.setItem("gsoc-wall-mine", JSON.stringify([...myIds(), id]));
   }
+  function getMe(){
+    try{ return JSON.parse(localStorage.getItem("gsoc-wall-me")) || null; }
+    catch(e){ return null; }
+  }
+  function setMe(email){
+    if(email) localStorage.setItem("gsoc-wall-me", JSON.stringify({email}));
+    else localStorage.removeItem("gsoc-wall-me");
+    paintMe();
+  }
+  function paintMe(){
+    const me = getMe();
+    const chip = document.getElementById("me-chip");
+    chip.classList.toggle("on", !!me);
+    if(me) document.getElementById("me-mail").textContent = me.email;
+  }
+  document.getElementById("me-out").addEventListener("click", () => setMe(null));
+
   function rebuild(){
     const extra = apiMode ? community : saved;
     // real badges first (founder, then community), dummies last
@@ -592,6 +713,15 @@
     return "https://www.linkedin.com/in/" + encodeURIComponent(id);
   }
 
+  function socialUrl(platform, v){
+    v = String(v || "").trim().replace(/^@/,"");
+    if(!v) return "";
+    if(/^https?:\/\//i.test(v)) return v;
+    if(v.includes(".")) return "https://" + v;
+    const p = PLATFORMS[platform];
+    return p && p.base ? p.base + v : "https://" + v;
+  }
+
   function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
   const HEXES = `<svg class="hexes" viewBox="0 0 84 60" aria-hidden="true">
@@ -611,7 +741,7 @@
         <div class="gsoc-line"><span class="gsoc-mark">&lt;/&gt;</span> Google Summer of Code</div>
         ${a.sample ? '<span class="sample-pill">Sample</span>' : ""}
         <p class="event">${esc(a.event)}</p>
-        <p class="city">${esc(a.city)}</p>
+        <p class="city">${esc(a.city || "")}</p>
         <div class="divider"></div>
         <p class="person">${esc(a.name)}</p>
         <p class="org">${esc(a.org)}</p>
@@ -622,15 +752,31 @@
       </article>`;
   }
 
+  function initials(name){
+    return String(name || "").split(/\s+/).map(w => w[0] || "").join("").slice(0,2) || "?";
+  }
+
+  function socialIcons(a){
+    const items = [];
+    if(a.linkedin) items.push(`<a class="soc p-linkedin" data-ext href="${esc(linkedinUrl(a.linkedin))}" target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label="LinkedIn">in</a>`);
+    (a.socials || []).forEach(s => {
+      const key = (s.platform || "Website");
+      const p = PLATFORMS[key] || PLATFORMS.Website;
+      const cls = "p-" + key.toLowerCase().replace(/[^a-z]/g,"");
+      const known = ["p-github","p-x","p-instagram","p-youtube","p-mastodon","p-website"];
+      items.push(`<a class="soc ${known.includes(cls)?cls:"p-website"}" data-ext href="${esc(socialUrl(key, s.url))}" target="_blank" rel="noopener noreferrer" title="${esc(key)}" aria-label="${esc(key)}">${p.mark}</a>`);
+    });
+    return items.join("");
+  }
+
   function badgeBack(a){
     if(a.sample){
       return `
         <div class="face backside">
-          <p class="lbl">Back of badge</p>
-          <p class="who">reserved for you</p>
-          <p class="note">This spot is waiting for a real alum. Hang your badge below and your
-          GSoC roadmap — contributor years, mentor years, orgs — will show up right here.</p>
-          <a class="li-btn" style="background:var(--orange)" href="#join" data-join>Hang your badge ↓</a>
+          <p class="bk-lbl">Back of badge</p>
+          <p class="note">This spot is waiting for a real alum. Hang your badge below — your
+          photo, GSoC roadmap, project link, and socials will show up right here.</p>
+          <a class="gsoc-chip" data-join href="#join">Hang your badge ↓</a>
         </div>`;
     }
     const steps = (a.roadmap || []).map(r => `
@@ -638,14 +784,29 @@
         <span class="yr">${esc(r.year)}</span>
         <span class="what">${esc(r.role)}</span> <span class="where">· ${esc(r.org)}</span>
       </li>`).join("");
-    const removable = a.community && (!apiMode || myIds().includes(a.id));
+    const avatar = a.photo
+      ? `<img class="avatar" src="${esc(a.photo)}" alt="">`
+      : `<span class="avatar avatar-txt">${esc(initials(a.name))}</span>`;
+    const mine = a.community && (!apiMode || myIds().includes(a.id));
     return `
       <div class="face backside">
-        <p class="lbl">GSoC roadmap</p>
-        <p class="who">${esc(a.name)}</p>
-        <ul class="roadmap">${steps || '<li><span class="what">GSoC alum</span></li>'}</ul>
-        ${a.linkedin ? `<a class="li-btn" href="${esc(linkedinUrl(a.linkedin))}" target="_blank" rel="noopener noreferrer" data-li>in · View LinkedIn profile →</a>` : ""}
-        ${removable ? '<button class="remove-x" data-remove>Take this badge down</button>' : ""}
+        <div class="bk-head">
+          ${avatar}
+          <span class="bk-id">
+            <p class="who">${esc(a.name)}</p>
+            <p class="bk-sub">${esc(a.role)} · ${esc(a.org)}</p>
+          </span>
+        </div>
+        <div class="bk-scroll">
+          <p class="bk-lbl">GSoC roadmap</p>
+          <ul class="roadmap">${steps || '<li><span class="what">GSoC alum</span></li>'}</ul>
+        </div>
+        ${a.gsocUrl ? `<a class="gsoc-chip" data-ext href="${esc(a.gsocUrl)}" target="_blank" rel="noopener noreferrer">&lt;/&gt; GSoC project ↗</a>` : ""}
+        <div class="socialrow">${socialIcons(a)}</div>
+        ${mine ? `<div class="ownrow">
+          <button class="edit-b" data-edit>✎ Edit</button>
+          <button class="del-b" data-remove>Take down</button>
+        </div>` : ""}
       </div>`;
   }
 
@@ -678,11 +839,9 @@
       const card = item.querySelector(".flipcard");
       const flip = () => card.classList.toggle("is-flipped");
       card.addEventListener("click", e => {
-        if(e.target.closest("[data-li]")) return;            // let LinkedIn open
-        if(e.target.closest("[data-join]")){                 // scroll to form
-          card.classList.remove("is-flipped");
-          return;
-        }
+        if(e.target.closest("[data-ext]")) return;            // let external links open
+        if(e.target.closest("[data-join]")){ card.classList.remove("is-flipped"); return; }
+        if(e.target.closest("[data-edit]")){ startEdit(a); return; }
         if(e.target.closest("[data-remove]")){ removeBadge(a); return; }
         flip();
       });
@@ -694,8 +853,13 @@
   }
 
   async function removeBadge(a){
+    const me = getMe();
     if(apiMode){
-      try{ await fetch(`${API}?id=${encodeURIComponent(a.id)}`, {method:"DELETE"}); }catch(e){}
+      const email = me ? me.email : "";
+      try{
+        const r = await fetch(`${API}?id=${encodeURIComponent(a.id)}&email=${encodeURIComponent(email)}`, {method:"DELETE"});
+        if(!r.ok){ alert("Couldn't take the badge down — sign in with the email you registered with."); return; }
+      }catch(e){ return; }
       community = community.filter(s => s.id !== a.id);
     }else{
       saved = saved.filter(s => s.id !== a.id);
@@ -704,73 +868,213 @@
     rebuild(); buildChips(); render(); updateStats();
   }
 
-  /* ---------- roadmap rows in the form ---------- */
+  /* ---------- form: events, roadmap rows, social rows, photo ---------- */
+  const form = document.getElementById("hang-form");
   const rolesBox = document.getElementById("roles-box");
-  function addRoleRow(first){
+  const socialsBox = document.getElementById("socials-box");
+  const eventSel = document.getElementById("f-event");
+  const roleSel = document.getElementById("f-role");
+  const submitBtn = document.getElementById("submit-btn");
+  const cancelBtn = document.getElementById("cancel-edit");
+
+  EVENTS.forEach((ev,i) => {
+    const o = document.createElement("option");
+    o.value = String(i); o.textContent = ev.label;
+    eventSel.appendChild(o);
+  });
+  function syncEventRole(){
+    const ev = EVENTS[Number(eventSel.value) || 0];
+    if(ev.none){ roleSel.value = "GSoCer"; roleSel.disabled = true; }
+    else{
+      roleSel.disabled = false;
+      if(roleSel.value === "GSoCer") roleSel.value = "Attendee";
+    }
+  }
+  eventSel.addEventListener("change", syncEventRole);
+  syncEventRole();
+
+  function addRoleRow(first, val){
     if(rolesBox.children.length >= 8) return;
     const row = document.createElement("div");
-    row.className = "role-row";
+    row.className = "row-line r-road";
     row.innerHTML = `
-      <select aria-label="Role">${ROLES.map(r => `<option>${r}</option>`).join("")}</select>
-      <input aria-label="Org" placeholder="Org (e.g. SymPy)"${first ? " required" : ""}>
-      <input aria-label="Year" placeholder="Year" inputmode="numeric" maxlength="4">
+      <select aria-label="Role">${ROLES.map(r => `<option${val && val.role===r ? " selected":""}>${r}</option>`).join("")}</select>
+      <input aria-label="Org" placeholder="Org (e.g. SymPy)"${first ? " required" : ""} value="${esc(val ? val.org : "")}">
+      <input aria-label="Year" placeholder="Year" inputmode="numeric" maxlength="4" value="${esc(val ? val.year : "")}">
       ${first ? "<span></span>" : '<button type="button" class="rm" aria-label="Remove role">✕</button>'}`;
     const rm = row.querySelector(".rm");
     if(rm) rm.addEventListener("click", () => row.remove());
     rolesBox.appendChild(row);
   }
+  function addSocialRow(val){
+    if(socialsBox.children.length >= 8) return;
+    const row = document.createElement("div");
+    row.className = "row-line r-soc";
+    row.innerHTML = `
+      <select aria-label="Platform">${Object.keys(PLATFORMS).map(p => `<option${val && val.platform===p ? " selected":""}>${p}</option>`).join("")}</select>
+      <input aria-label="Link or handle" placeholder="handle or full link" value="${esc(val ? val.url : "")}">
+      <button type="button" class="rm" aria-label="Remove social">✕</button>`;
+    row.querySelector(".rm").addEventListener("click", () => row.remove());
+    socialsBox.appendChild(row);
+  }
   addRoleRow(true);
   document.getElementById("add-role").addEventListener("click", () => addRoleRow(false));
+  document.getElementById("add-social").addEventListener("click", () => addSocialRow());
 
-  document.getElementById("hang-form").addEventListener("submit", async e => {
-    e.preventDefault();
-    const f = e.target;
-    const name = f.name.value.trim(), li = f.linkedin.value.trim();
-    const roadmap = [...rolesBox.querySelectorAll(".role-row")].map(row => {
+  const photoInput = document.getElementById("f-photo");
+  const photoPreview = document.getElementById("photo-preview");
+  photoInput.addEventListener("change", () => {
+    const file = photoInput.files && photoInput.files[0];
+    if(!file){ photoData = ""; photoPreview.classList.remove("on"); return; }
+    const img = new Image();
+    img.onload = () => {
+      const size = 256;
+      const c = document.createElement("canvas");
+      const scale = Math.max(size / img.width, size / img.height);
+      c.width = Math.min(img.width * scale, size);
+      c.height = Math.min(img.height * scale, size);
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      photoData = c.toDataURL("image/jpeg", .85);
+      photoPreview.src = photoData;
+      photoPreview.classList.add("on");
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
+  function collectRows(){
+    const roadmap = [...rolesBox.querySelectorAll(".row-line")].map(row => {
       const [sel, orgIn, yrIn] = row.querySelectorAll("select, input");
       return {role: sel.value, org: orgIn.value.trim(), year: yrIn.value.trim()};
     }).filter(r => r.org || r.year);
-    if(!name || !li || !roadmap.length || !roadmap[0].org){
-      f.reportValidity();
-      if(name && li) alert("Add at least one roadmap row with your org.");
+    const socials = [...socialsBox.querySelectorAll(".row-line")].map(row => {
+      const [sel, urlIn] = row.querySelectorAll("select, input");
+      return {platform: sel.value, url: urlIn.value.trim()};
+    }).filter(s => s.url);
+    return {roadmap, socials};
+  }
+
+  function setFormMode(editing){
+    editingId = editing ? editing.id : null;
+    form.classList.toggle("editing", !!editing);
+    submitBtn.textContent = editing ? "Update my badge" : "Hang my badge";
+    document.getElementById("join-title").textContent =
+      editing ? "Edit your badge" : "Were you there? Hang your badge.";
+    cancelBtn.classList.toggle("on", !!editing);
+  }
+  cancelBtn.addEventListener("click", () => { form.reset(); resetRows(); setFormMode(null); });
+
+  function resetRows(){
+    rolesBox.innerHTML = ""; addRoleRow(true);
+    socialsBox.innerHTML = "";
+    photoData = ""; photoPreview.classList.remove("on");
+    syncEventRole();
+  }
+
+  function fillForm(a, email){
+    form.name.value = a.name || "";
+    form.email.value = email || "";
+    form.gsocUrl.value = a.gsocUrl || "";
+    form.linkedin.value = a.linkedin || "";
+    form.year.value = /^\d{4}$/.test(a.year) ? a.year : "";
+    const evIdx = EVENTS.findIndex(ev =>
+      ev.city && a.city && ev.city.toLowerCase() === a.city.toLowerCase());
+    eventSel.value = String(evIdx >= 0 ? evIdx : EVENTS.length - 1);
+    syncEventRole();
+    if(!roleSel.disabled && ROLES.concat("GSoCer").includes(a.role)) roleSel.value = a.role;
+    rolesBox.innerHTML = "";
+    const rm = (a.roadmap && a.roadmap.length) ? a.roadmap : [null];
+    rm.forEach((r,i) => addRoleRow(i === 0, r));
+    socialsBox.innerHTML = "";
+    (a.socials || []).forEach(s => addSocialRow(s));
+    photoData = "";
+    if(a.photo){ photoPreview.src = a.photo; photoPreview.classList.add("on"); }
+    else photoPreview.classList.remove("on");
+  }
+
+  function startEdit(a){
+    const me = getMe();
+    fillForm(a, me ? me.email : "");
+    setFormMode(a);
+    document.getElementById("join").scrollIntoView({behavior:"smooth"});
+    if(!form.email.value) form.email.focus();
+  }
+
+  document.getElementById("edit-load").addEventListener("click", async () => {
+    const email = document.getElementById("edit-email").value.trim();
+    if(!email){ document.getElementById("edit-email").focus(); return; }
+    try{
+      const res = await fetch(`${API}?email=${encodeURIComponent(email)}`, {cache:"no-store"});
+      const data = await res.json();
+      if(!data.badges || !data.badges.length){
+        alert("No badge found for that email. If you registered before edit existed, open your card and use ✎ Edit.");
+        return;
+      }
+      setMe(email);
+      data.badges.forEach(b => rememberMine(b.id));
+      render();
+      const mine = data.badges[0];
+      fillForm(mine, email);
+      setFormMode(mine);
+    }catch(e){ alert("Couldn't reach the wall — try again."); }
+  });
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = form.name.value.trim();
+    const email = form.email.value.trim();
+    const li = form.linkedin.value.trim();
+    const gsocUrl = form.gsocUrl.value.trim();
+    const {roadmap, socials} = collectRows();
+    if(!name || !email || !li || !gsocUrl || !roadmap.length || !roadmap[0].org){
+      form.reportValidity();
+      if(name && email && li && gsocUrl) alert("Add at least one roadmap row with your org.");
       return;
     }
+    const ev = EVENTS[Number(eventSel.value) || 0];
     const entry = {
-      name, linkedin: li,
+      name, email, linkedin: li, gsocUrl,
       org: roadmap[0].org,
-      event: f.event.value.trim() || "GSoC Alumni",
-      city: f.city.value.trim() || "—",
-      year: f.year.value.trim() || String(new Date().getFullYear()),
-      role: f.role.value,
-      roadmap
+      event: ev.event, city: ev.city,
+      year: form.year.value.trim() || String(new Date().getFullYear()),
+      role: roleSel.value,
+      roadmap, socials,
+      ...(photoData ? {photoData} : {})
     };
-    const submitBtn = f.querySelector('button[type="submit"]');
-    submitBtn.disabled = true; submitBtn.textContent = "Hanging…";
+    submitBtn.disabled = true;
+    submitBtn.textContent = editingId ? "Updating…" : "Hanging…";
     try{
       if(apiMode){
+        const method = editingId ? "PUT" : "POST";
+        const body = editingId ? {...entry, id: editingId} : entry;
         const res = await fetch(API, {
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify(entry)
+          method, headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(body)
         });
-        if(!res.ok) throw new Error("save failed");
-        const {badge} = await res.json();
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || "save failed");
+        const badge = {...data.badge, community:true};
+        if(editingId) community = community.map(c => c.id === badge.id ? badge : c);
+        else community.push(badge);
         rememberMine(badge.id);
-        community.push({...badge, community:true});
+        setMe(email);
       }else{
-        const local = {...entry, id:"local-"+Date.now(), community:true};
-        saved.push(local);
+        const local = {...entry, id: editingId || ("local-"+Date.now()), community:true};
+        if(editingId) saved = saved.map(s => s.id === editingId ? local : s);
+        else saved.push(local);
         localStorage.setItem("gsoc-wall-badges", JSON.stringify(saved));
       }
       rebuild();
-      f.reset();
-      rolesBox.innerHTML = ""; addRoleRow(true);
+      form.reset(); resetRows(); setFormMode(null);
       activeYear = "All"; searchEl.value = "";
       buildChips(); render(); updateStats();
       document.getElementById("wall").scrollIntoView({behavior:"smooth"});
     }catch(err){
-      alert("Couldn't hang your badge right now — please try again.");
+      alert(err.message || "Couldn't save your badge right now — please try again.");
     }finally{
-      submitBtn.disabled = false; submitBtn.textContent = "Hang my badge";
+      submitBtn.disabled = false;
+      submitBtn.textContent = editingId ? "Update my badge" : "Hang my badge";
     }
   });
 
@@ -786,7 +1090,8 @@
   }
 
   searchEl.addEventListener("input", render);
-  buildChips(); render(); updateStats();
+  paintMe();
+  rebuild(); buildChips(); render(); updateStats();
   syncFromApi();
 </script>
 </body>
