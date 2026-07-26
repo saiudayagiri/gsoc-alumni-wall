@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GSoC Alumni Badge Wall</title>
 <meta name="description" content="A community wall of Google Summer of Code alumni conference badges — flip a badge to see the alum's GSoC roadmap, project, and socials.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
   :root{
     --orange:#E8710A;
@@ -621,7 +624,7 @@
     "Instagram": {base:"https://instagram.com/",  mark:"IG"},
     "YouTube":   {base:"https://youtube.com/",    mark:"▶"},
     "Mastodon":  {base:"",                        mark:"M"},
-    "Website":   {base:"",                        mark:"W"}
+    "Website":   {base:"",                        mark:'<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 9h-3.02a15.6 15.6 0 0 0-1.1-5.02A8.03 8.03 0 0 1 19.93 11zM12 4c.9 1.2 1.9 3.3 2.4 7H9.6c.5-3.7 1.5-5.8 2.4-7zM4.07 13h3.02c.17 1.8.55 3.5 1.1 5.02A8.03 8.03 0 0 1 4.07 13zm3.02-2H4.07a8.03 8.03 0 0 1 4.12-5.02c-.55 1.52-.93 3.22-1.1 5.02zM12 20c-.9-1.2-1.9-3.3-2.4-7h4.8c-.5 3.7-1.5 5.8-2.4 7zm3.81-1.98c.55-1.52.93-3.22 1.1-5.02h3.02a8.03 8.03 0 0 1-4.12 5.02z"/></svg>'}
   };
 
   // the founder's badge lives in the shared API like everyone else's;
@@ -664,6 +667,7 @@
   let community = [];           // shared badges from the API
   let alumni = [];
   let editingId = null;         // id being edited, null = registering
+  let editingSigs = [];         // signatures carried through an edit
   let photoData = "";           // resized data-url pending upload
 
   function loadLocal(){
@@ -1084,6 +1088,7 @@
     rm.forEach(r => addRoleRow(r));
     socialsBox.innerHTML = "";
     (a.socials || []).forEach(s => addSocialRow(s));
+    editingSigs = a.sigs || [];
     photoData = "";
     if(a.photo){ photoPreview.src = a.photo; photoPreview.classList.add("on"); }
     else photoPreview.classList.remove("on");
@@ -1146,6 +1151,7 @@
       year: form.year.value.trim() || String(new Date().getFullYear()),
       role: roleSel.value,
       roadmap, socials,
+      sigs: editingId ? editingSigs : [],
       ...(photoData ? {photoData} : {})
     };
     submitBtn.disabled = true;
