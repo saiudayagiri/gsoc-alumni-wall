@@ -137,6 +137,20 @@ function buildFields(b) {
 const normUrl = (u) => String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
 const GSOC_URL_RE = /^https?:\/\/(www\.)?summerofcode\.withgoogle\.com\/archive\/\d{4}\/projects\/[\w-]+\/?$/i;
 
+// Whatever the client sends — archive URL, /myprojects/details/<id>, or a bare
+// id — take the unique id after the last slash and rebuild the archive template.
+function normalizeGsocUrl(v, fallbackYear) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  if (GSOC_URL_RE.test(v)) return v.replace(/\/+$/, '');
+  const yearInUrl = (v.match(/\/(20\d{2})\//) || [])[1];
+  const id = v.replace(/[?#].*$/, '').replace(/\/+$/, '').split('/').pop();
+  if (!/^[\w-]{4,}$/.test(id) || /^20\d{2}$/.test(id) ||
+      ['projects', 'details', 'archive', 'myprojects', 'programs'].includes(id.toLowerCase())) return '';
+  const year = yearInUrl || fallbackYear || String(new Date().getFullYear());
+  return `https://summerofcode.withgoogle.com/archive/${year}/projects/${id}`;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   try {
@@ -157,8 +171,10 @@ export default async function handler(req, res) {
       if (!fields.name || !fields.linkedin || !email || !fields.gsocUrl) {
         return res.status(400).json({ error: 'name, email, linkedin and gsocUrl are required' });
       }
-      if (!GSOC_URL_RE.test(fields.gsocUrl)) {
-        return res.status(400).json({ error: 'gsocUrl must look like https://summerofcode.withgoogle.com/archive/<year>/projects/<id>' });
+      const contribYear = (fields.roadmap.find((r) => r.role === 'Contributor' && /^\d{4}$/.test(r.year)) || {}).year;
+      fields.gsocUrl = normalizeGsocUrl(fields.gsocUrl, contribYear || (/^\d{4}$/.test(fields.year) ? fields.year : ''));
+      if (!fields.gsocUrl) {
+        return res.status(400).json({ error: 'could not read a project id from gsocUrl — paste your GSoC project link in any form' });
       }
       if (!fields.org && fields.roadmap.length) fields.org = fields.roadmap[0].org;
       if (!fields.org) return res.status(400).json({ error: 'add at least one roadmap row with your org' });
@@ -200,8 +216,10 @@ export default async function handler(req, res) {
       if (!fields.name || !fields.linkedin || !fields.gsocUrl) {
         return res.status(400).json({ error: 'name, linkedin and gsocUrl are required' });
       }
-      if (!GSOC_URL_RE.test(fields.gsocUrl)) {
-        return res.status(400).json({ error: 'gsocUrl must look like https://summerofcode.withgoogle.com/archive/<year>/projects/<id>' });
+      const contribYear = (fields.roadmap.find((r) => r.role === 'Contributor' && /^\d{4}$/.test(r.year)) || {}).year;
+      fields.gsocUrl = normalizeGsocUrl(fields.gsocUrl, contribYear || (/^\d{4}$/.test(fields.year) ? fields.year : ''));
+      if (!fields.gsocUrl) {
+        return res.status(400).json({ error: 'could not read a project id from gsocUrl — paste your GSoC project link in any form' });
       }
       if (!fields.org && fields.roadmap.length) fields.org = fields.roadmap[0].org;
       const photo = b.photoData ? await savePhoto(id, b.photoData) : (cur.entry.photo || '');

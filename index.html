@@ -520,7 +520,7 @@
     <div class="field full">
       <label for="f-gsoc">GSoC project URL *</label>
       <input id="f-gsoc" name="gsocUrl" required placeholder="https://summerofcode.withgoogle.com/archive/2025/projects/K6y23OZP">
-      <span class="hint">Your project's archive URL — summerofcode.withgoogle.com/archive/&lt;year&gt;/projects/&lt;id&gt;. One badge per project.</span>
+      <span class="hint">Paste your project link in any form — we'll convert it to the archive URL. One badge per project.</span>
     </div>
     <div class="field">
       <label for="f-linkedin">LinkedIn *</label>
@@ -595,6 +595,21 @@
   // this project id pins it to the front of the wall
   const FOUNDER_URL = "projects/K6y23OZP";
   const GSOC_URL_RE = /^https?:\/\/(www\.)?summerofcode\.withgoogle\.com\/archive\/\d{4}\/projects\/[\w-]+\/?$/i;
+
+  // Whatever they paste — archive URL, /myprojects/details/<id>, /programs/…,
+  // or just the id — take the unique id after the last slash and rebuild the
+  // canonical archive template.
+  function normalizeGsocUrl(v, fallbackYear){
+    v = String(v || "").trim();
+    if(!v) return "";
+    if(GSOC_URL_RE.test(v)) return v.replace(/\/+$/,"");
+    const yearInUrl = (v.match(/\/(20\d{2})\//) || [])[1];
+    const id = v.replace(/[?#].*$/,"").replace(/\/+$/,"").split("/").pop();
+    if(!/^[\w-]{4,}$/.test(id) || /^20\d{2}$/.test(id) ||
+       ["projects","details","archive","myprojects","programs"].includes(id.toLowerCase())) return "";
+    const year = yearInUrl || fallbackYear || String(new Date().getFullYear());
+    return `https://summerofcode.withgoogle.com/archive/${year}/projects/${id}`;
+  }
   const seed = [
     {
       id:"dummy-1", sample:true,
@@ -1018,18 +1033,21 @@
     const name = form.name.value.trim();
     const email = form.email.value.trim();
     const li = form.linkedin.value.trim();
-    const gsocUrl = form.gsocUrl.value.trim();
     const {roadmap, socials} = collectRows();
-    if(!name || !email || !li || !gsocUrl || !roadmap.length || !roadmap[0].org){
+    if(!name || !email || !li || !form.gsocUrl.value.trim() || !roadmap.length || !roadmap[0].org){
       form.reportValidity();
-      if(name && email && li && gsocUrl) alert("Add at least one roadmap row with your org.");
+      if(name && email && li && form.gsocUrl.value.trim()) alert("Add at least one roadmap row with your org.");
       return;
     }
-    if(!GSOC_URL_RE.test(gsocUrl)){
-      alert("Your GSoC project URL should look like:\nhttps://summerofcode.withgoogle.com/archive/<year>/projects/<id>\n\nFind it in the GSoC archive for your program year.");
+    const contribYear = (roadmap.find(r => r.role === "Contributor" && /^\d{4}$/.test(r.year)) || {}).year;
+    const gsocUrl = normalizeGsocUrl(form.gsocUrl.value,
+      contribYear || (/^\d{4}$/.test(form.year.value.trim()) ? form.year.value.trim() : ""));
+    if(!gsocUrl){
+      alert("Couldn't read a project id from that link. Paste your GSoC project URL in any form — we just need the id after the last slash.");
       form.gsocUrl.focus();
       return;
     }
+    form.gsocUrl.value = gsocUrl;
     const ev = EVENTS[Number(eventSel.value) || 0];
     const entry = {
       name, email, linkedin: li, gsocUrl,
