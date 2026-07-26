@@ -152,6 +152,7 @@ function buildFields(b) {
     org: clean(b.org, 80),
     event: clean(b.event) || 'GSoC Alumni',
     city: clean(b.city, 60),
+    homeCity: clean(b.homeCity, 60),
     year: clean(b.year, 4) || String(new Date().getFullYear()),
     role: clean(b.role, 40) || 'GSoCer',
     roadmap: sanitizeRoadmap(b.roadmap),
