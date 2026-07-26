@@ -26,6 +26,9 @@ const sanitizeSocials = (v) =>
     .map((s) => ({ platform: clean(s?.platform, 30), url: clean(s?.url, 300) }))
     .filter((s) => s.url);
 
+const sanitizeSigs = (v) =>
+  (Array.isArray(v) ? v : []).slice(0, 4).map((s) => clean(s, 60)).filter(Boolean);
+
 const publicView = ({ owner, ...rest }) => rest;
 
 async function readAll() {
@@ -127,6 +130,7 @@ function buildFields(b) {
     role: clean(b.role, 40) || 'GSoCer',
     roadmap: sanitizeRoadmap(b.roadmap),
     socials: sanitizeSocials(b.socials),
+    sigs: sanitizeSigs(b.sigs),
   };
 }
 

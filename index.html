@@ -591,21 +591,10 @@
     "Website":   {base:"",                        mark:"W"}
   };
 
+  // the founder's badge lives in the shared API like everyone else's;
+  // this URL pins it to the front of the wall
+  const FOUNDER_URL = "summerofcode.withgoogle.com/myprojects/details/K6y23OZP";
   const seed = [
-    {
-      id:"founder",
-      name:"sai udayagiri", org:"Sympy", event:"Alumni CAMP India 2026", city:"Delhi",
-      year:"2026", role:"Attendee", founder:true,
-      linkedin:"sai-udayagiri",
-      gsocUrl:"https://summerofcode.withgoogle.com/myprojects/details/K6y23OZP",
-      photo:"",
-      socials:[{platform:"GitHub", url:"github.com/saiudayagiri"}],
-      sigs:["Amanda Casaci","Stephanie Taylor"],
-      roadmap:[
-        {role:"Contributor", org:"SymPy", year:"2025"},
-        {role:"Attendee", org:"Alumni CAMP India, Delhi", year:"2026"}
-      ]
-    },
     {
       id:"dummy-1", sample:true,
       name:"your name here", org:"your org", event:"Your GSoC Event", city:"your city",
@@ -658,9 +647,12 @@
   document.getElementById("me-out").addEventListener("click", () => setMe(null));
 
   function rebuild(){
-    const extra = apiMode ? community : saved;
-    // real badges first (founder, then community), dummies last
-    alumni = [seed[0], ...extra, ...seed.slice(1)];
+    const extra = [...(apiMode ? community : saved)];
+    // founder's badge first, then the rest by arrival; dummies last
+    extra.sort((a,b) =>
+      (String(b.gsocUrl||"").includes(FOUNDER_URL) ? 1 : 0) -
+      (String(a.gsocUrl||"").includes(FOUNDER_URL) ? 1 : 0));
+    alumni = [...extra, ...seed];
   }
 
   async function syncFromApi(){
