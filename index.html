@@ -753,7 +753,8 @@
   </svg>`;
 
   function badgeFront(a){
-    const sigs = (a.sigs || []).map((s,i) =>
+    const sigNames = (a.sigs && a.sigs.length) ? a.sigs : ["Amanda Casari","Stephanie Taylor"];
+    const sigs = sigNames.map((s,i) =>
       `<div class="sig script${i===1?" blue":""}">${esc(s)}</div>`).join("");
     return `
       <article class="badge-sm face front">
