@@ -407,6 +407,8 @@
   }
   .cancel-edit.on{display:block}
   .cancel-edit:hover{color:var(--red)}
+  .cancel-edit.danger{color:var(--red);font-weight:700}
+  .cancel-edit.danger:hover{text-decoration:underline}
   .form-note{grid-column:1/-1;font-size:12px;color:var(--ink-soft);text-align:center;margin:0}
 
   footer.site{
@@ -565,6 +567,7 @@
     </div>
     <button class="btn btn-primary" type="submit" id="submit-btn">Hang my badge</button>
     <button class="cancel-edit" type="button" id="cancel-edit">Cancel editing — register a new badge instead</button>
+    <button class="cancel-edit danger" type="button" id="delete-badge">Take my badge down from the wall</button>
     <p class="form-note">Your badge is added to the shared wall — everyone with the link sees it.</p>
   </form>
 </section>
@@ -814,7 +817,6 @@
         <div class="socialrow">${socialIcons(a)}</div>
         ${mine ? `<div class="ownrow">
           <button class="edit-b" data-edit>✎ Edit</button>
-          <button class="del-b" data-remove>Take down</button>
         </div>` : ""}
       </div>`;
   }
@@ -851,7 +853,6 @@
         if(e.target.closest("[data-ext]")) return;            // let external links open
         if(e.target.closest("[data-join]")){ card.classList.remove("is-flipped"); return; }
         if(e.target.closest("[data-edit]")){ startEdit(a); return; }
-        if(e.target.closest("[data-remove]")){ removeBadge(a); return; }
         flip();
       });
       card.addEventListener("keydown", e => {
@@ -861,20 +862,22 @@
     });
   }
 
-  async function removeBadge(a){
-    const me = getMe();
+  // taking a badge down is only possible from the edit form, verified by email
+  async function removeBadge(id, email){
     if(apiMode){
-      const email = me ? me.email : "";
-      try{
-        const r = await fetch(`${API}?id=${encodeURIComponent(a.id)}&email=${encodeURIComponent(email)}`, {method:"DELETE"});
-        if(!r.ok){ alert("Couldn't take the badge down — sign in with the email you registered with."); return; }
-      }catch(e){ return; }
-      community = community.filter(s => s.id !== a.id);
+      const r = await fetch(`${API}?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`, {method:"DELETE"});
+      if(!r.ok){
+        const d = await r.json().catch(() => ({}));
+        alert(d.error || "Couldn't take the badge down — use the email you registered with.");
+        return false;
+      }
+      community = community.filter(s => s.id !== id);
     }else{
-      saved = saved.filter(s => s.id !== a.id);
+      saved = saved.filter(s => s.id !== id);
       localStorage.setItem("gsoc-wall-badges", JSON.stringify(saved));
     }
     rebuild(); buildChips(); render(); updateStats();
+    return true;
   }
 
   /* ---------- form: events, roadmap rows, social rows, photo ---------- */
@@ -978,6 +981,7 @@
     return {roadmap, socials};
   }
 
+  const deleteBtn = document.getElementById("delete-badge");
   function setFormMode(editing){
     editingId = editing ? editing.id : null;
     form.classList.toggle("editing", !!editing);
@@ -985,8 +989,19 @@
     document.getElementById("join-title").textContent =
       editing ? "Edit your badge" : "Were you there? Hang your badge.";
     cancelBtn.classList.toggle("on", !!editing);
+    deleteBtn.classList.toggle("on", !!editing);
   }
   cancelBtn.addEventListener("click", () => { form.reset(); resetRows(); setFormMode(null); });
+  deleteBtn.addEventListener("click", async () => {
+    if(!editingId) return;
+    const email = form.email.value.trim();
+    if(!email){ form.email.focus(); return; }
+    if(!confirm("Take your badge down from the wall? You can always hang it again later.")) return;
+    if(await removeBadge(editingId, email)){
+      form.reset(); resetRows(); setFormMode(null);
+      document.getElementById("wall").scrollIntoView({behavior:"smooth"});
+    }
+  });
 
   function resetRows(){
     rolesBox.innerHTML = ""; addRoleRow(true);
