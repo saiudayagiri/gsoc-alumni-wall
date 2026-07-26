@@ -494,7 +494,7 @@
       <p>Flip a badge to see the alum's roadmap, GSoC project, and socials.</p>
     </div>
     <div class="controls">
-      <input class="search" id="search" type="search" placeholder="Search name, org, city…" aria-label="Search alumni">
+      <input class="search" id="search" type="search" placeholder="Search name, org, event, city…" aria-label="Search alumni">
     </div>
   </div>
   <div class="chips" id="chips" role="group" aria-label="Filter by event year"></div>
@@ -549,11 +549,16 @@
       <label for="f-year">Badge year</label>
       <input id="f-year" name="year" inputmode="numeric" maxlength="4" placeholder="2026">
     </div>
+    <div class="field">
+      <label for="f-homecity">Your city</label>
+      <input id="f-homecity" name="homeCity" placeholder="Hyderabad">
+      <span class="hint">Shown on the back of your badge — helps alumni in your city find and connect with you.</span>
+    </div>
     <div class="field full">
-      <span class="rows-label">Your GSoC roadmap * <span style="text-transform:none;font-weight:400">(shown on the back of your card)</span></span>
+      <span class="rows-label">Your GSoC roadmap *</span>
+      <span class="hint">Add your roles, orgs, and the events you attended — people you met at GSoC events can then find you through search.</span>
       <div class="rows-box" id="roles-box"></div>
       <button type="button" class="add-row" id="add-role">+ Add another role</button>
-      <span class="hint">One row per role — Contributor, Mentor, Mentor Summit… Pick "Other…" to type anything else.</span>
     </div>
     <div class="field full">
       <span class="rows-label">More socials <span style="text-transform:none;font-weight:400">(optional)</span></span>
@@ -582,7 +587,7 @@
 </footer>
 
 <script>
-  const ROLES = ["Contributor","Mentor","Org Admin","Speaker","Attendee","Mentor Summit"];
+  const ROLES = ["Contributor","Mentor","Org Admin","Speaker","Attendee"];
   const OTHER_ROLE = "Other…";
   const EVENTS = [
     {label:"Alumni CAMP India 2026 — Delhi", event:"Alumni CAMP India 2026", city:"Delhi"},
@@ -809,7 +814,7 @@
           ${avatar}
           <span class="bk-id">
             <p class="who">${esc(a.name)}</p>
-            <p class="bk-sub">${esc(a.role)} · ${esc(a.org)}</p>
+            <p class="bk-sub">${esc(a.role)} · ${esc(a.org)}${a.homeCity ? " · 📍 " + esc(a.homeCity) : ""}</p>
           </span>
         </div>
         <div class="bk-scroll">
@@ -828,8 +833,8 @@
     const q = searchEl.value.trim().toLowerCase();
     const list = alumni.filter(a =>
       (activeYear === "All" || a.year === activeYear) &&
-      (!q || [a.name, a.org, a.city, a.event,
-              ...(a.roadmap || []).map(r => r.org + " " + r.role)]
+      (!q || [a.name, a.org, a.city, a.event, a.homeCity,
+              ...(a.roadmap || []).map(r => r.org + " " + r.role + " " + r.year)]
         .join(" ").toLowerCase().includes(q))
     );
     grid.innerHTML = "";
@@ -1033,6 +1038,7 @@
     form.gsocUrl.value = a.gsocUrl || "";
     form.linkedin.value = a.linkedin || "";
     form.year.value = /^\d{4}$/.test(a.year) ? a.year : "";
+    form.homeCity.value = a.homeCity || "";
     const evIdx = EVENTS.findIndex(ev =>
       ev.city && a.city && ev.city.toLowerCase() === a.city.toLowerCase());
     eventSel.value = String(evIdx >= 0 ? evIdx : EVENTS.length - 1);
@@ -1100,6 +1106,7 @@
       name, email, linkedin: li, gsocUrl,
       org: roadmap[0].org,
       event: ev.event, city: ev.city,
+      homeCity: form.homeCity.value.trim(),
       year: form.year.value.trim() || String(new Date().getFullYear()),
       role: roleSel.value,
       roadmap, socials,
