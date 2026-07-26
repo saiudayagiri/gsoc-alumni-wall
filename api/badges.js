@@ -77,7 +77,33 @@ async function savePhoto(id, dataUrl) {
     contentType: `image/${m[1]}`,
     cacheControlMaxAge: 31536000,
   });
+  await ghBackupFile(`data/photos/${id}.${ext}`, m[2], `backup: photo for badge ${id}`);
   return res.url;
+}
+
+// commit any file (base64 content) to the repo — best effort, never blocks
+async function ghBackupFile(path, base64Content, message) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return;
+  const url = `https://api.github.com/repos/${GH_REPO}/contents/${path}`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'gsoc-alumni-wall',
+    'Content-Type': 'application/json',
+  };
+  try {
+    let sha;
+    const existing = await fetch(url, { headers });
+    if (existing.ok) sha = (await existing.json()).sha;
+    await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ message, content: base64Content, ...(sha ? { sha } : {}) }),
+    });
+  } catch (e) {
+    console.error('github photo backup failed', e);
+  }
 }
 
 // Best-effort mirror into the GitHub repo (data/badges/<id>.json) so the wall
