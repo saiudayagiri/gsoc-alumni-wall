@@ -135,6 +135,7 @@ function buildFields(b) {
 }
 
 const normUrl = (u) => String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+const GSOC_URL_RE = /^https?:\/\/(www\.)?summerofcode\.withgoogle\.com\/archive\/\d{4}\/projects\/[\w-]+\/?$/i;
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -155,6 +156,9 @@ export default async function handler(req, res) {
       const email = clean(b.email, 200);
       if (!fields.name || !fields.linkedin || !email || !fields.gsocUrl) {
         return res.status(400).json({ error: 'name, email, linkedin and gsocUrl are required' });
+      }
+      if (!GSOC_URL_RE.test(fields.gsocUrl)) {
+        return res.status(400).json({ error: 'gsocUrl must look like https://summerofcode.withgoogle.com/archive/<year>/projects/<id>' });
       }
       if (!fields.org && fields.roadmap.length) fields.org = fields.roadmap[0].org;
       if (!fields.org) return res.status(400).json({ error: 'add at least one roadmap row with your org' });
@@ -195,6 +199,9 @@ export default async function handler(req, res) {
       const fields = buildFields(b);
       if (!fields.name || !fields.linkedin || !fields.gsocUrl) {
         return res.status(400).json({ error: 'name, linkedin and gsocUrl are required' });
+      }
+      if (!GSOC_URL_RE.test(fields.gsocUrl)) {
+        return res.status(400).json({ error: 'gsocUrl must look like https://summerofcode.withgoogle.com/archive/<year>/projects/<id>' });
       }
       if (!fields.org && fields.roadmap.length) fields.org = fields.roadmap[0].org;
       const photo = b.photoData ? await savePhoto(id, b.photoData) : (cur.entry.photo || '');

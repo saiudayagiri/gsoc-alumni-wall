@@ -519,8 +519,8 @@
     </div>
     <div class="field full">
       <label for="f-gsoc">GSoC project URL *</label>
-      <input id="f-gsoc" name="gsocUrl" required placeholder="https://summerofcode.withgoogle.com/…/projects/…">
-      <span class="hint">Your unique project URL from summerofcode.withgoogle.com — one badge per project.</span>
+      <input id="f-gsoc" name="gsocUrl" required placeholder="https://summerofcode.withgoogle.com/archive/2025/projects/K6y23OZP">
+      <span class="hint">Your project's archive URL — summerofcode.withgoogle.com/archive/&lt;year&gt;/projects/&lt;id&gt;. One badge per project.</span>
     </div>
     <div class="field">
       <label for="f-linkedin">LinkedIn *</label>
@@ -592,8 +592,9 @@
   };
 
   // the founder's badge lives in the shared API like everyone else's;
-  // this URL pins it to the front of the wall
-  const FOUNDER_URL = "summerofcode.withgoogle.com/myprojects/details/K6y23OZP";
+  // this project id pins it to the front of the wall
+  const FOUNDER_URL = "projects/K6y23OZP";
+  const GSOC_URL_RE = /^https?:\/\/(www\.)?summerofcode\.withgoogle\.com\/archive\/\d{4}\/projects\/[\w-]+\/?$/i;
   const seed = [
     {
       id:"dummy-1", sample:true,
@@ -1022,6 +1023,11 @@
     if(!name || !email || !li || !gsocUrl || !roadmap.length || !roadmap[0].org){
       form.reportValidity();
       if(name && email && li && gsocUrl) alert("Add at least one roadmap row with your org.");
+      return;
+    }
+    if(!GSOC_URL_RE.test(gsocUrl)){
+      alert("Your GSoC project URL should look like:\nhttps://summerofcode.withgoogle.com/archive/<year>/projects/<id>\n\nFind it in the GSoC archive for your program year.");
+      form.gsocUrl.focus();
       return;
     }
     const ev = EVENTS[Number(eventSel.value) || 0];
