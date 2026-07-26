@@ -548,7 +548,7 @@
       <span class="rows-label">Your GSoC roadmap * <span style="text-transform:none;font-weight:400">(shown on the back of your card)</span></span>
       <div class="rows-box" id="roles-box"></div>
       <button type="button" class="add-row" id="add-role">+ Add another role</button>
-      <span class="hint">One row per role — e.g. Contributor · SymPy · 2025, then Mentor · another org · 2026.</span>
+      <span class="hint">One row per role — Contributor, Mentor, Mentor Summit… Pick "Other…" to type anything else.</span>
     </div>
     <div class="field full">
       <span class="rows-label">More socials <span style="text-transform:none;font-weight:400">(optional)</span></span>
@@ -576,7 +576,8 @@
 </footer>
 
 <script>
-  const ROLES = ["Contributor","Mentor","Org Admin","Speaker","Attendee"];
+  const ROLES = ["Contributor","Mentor","Org Admin","Speaker","Attendee","Mentor Summit"];
+  const OTHER_ROLE = "Other…";
   const EVENTS = [
     {label:"Alumni CAMP India 2026 — Delhi", event:"Alumni CAMP India 2026", city:"Delhi"},
     {label:"Alumni CAMP India 2026 — Bengaluru", event:"Alumni CAMP India 2026", city:"Bengaluru"},
@@ -905,11 +906,25 @@
     if(rolesBox.children.length >= 8) return;
     const row = document.createElement("div");
     row.className = "row-line r-road";
+    // a custom role (e.g. "Mentor Summit 2024 volunteer") renders as free text
+    const custom = val && val.role && !ROLES.includes(val.role);
+    const roleCell = custom
+      ? `<input aria-label="Role" placeholder="your role" value="${esc(val.role)}">`
+      : `<select aria-label="Role">${ROLES.map(r => `<option${val && val.role===r ? " selected":""}>${r}</option>`).join("")}<option>${OTHER_ROLE}</option></select>`;
     row.innerHTML = `
-      <select aria-label="Role">${ROLES.map(r => `<option${val && val.role===r ? " selected":""}>${r}</option>`).join("")}</select>
-      <input aria-label="Org" placeholder="Org (e.g. SymPy)"${first ? " required" : ""} value="${esc(val ? val.org : "")}">
+      ${roleCell}
+      <input aria-label="Org" placeholder="Org / event (e.g. SymPy)"${first ? " required" : ""} value="${esc(val ? val.org : "")}">
       <input aria-label="Year" placeholder="Year" inputmode="numeric" maxlength="4" value="${esc(val ? val.year : "")}">
       ${first ? "<span></span>" : '<button type="button" class="rm" aria-label="Remove role">✕</button>'}`;
+    const sel = row.querySelector("select");
+    if(sel) sel.addEventListener("change", () => {
+      if(sel.value !== OTHER_ROLE) return;
+      const inp = document.createElement("input");
+      inp.setAttribute("aria-label","Role");
+      inp.placeholder = "your role — anything counts";
+      sel.replaceWith(inp);
+      inp.focus();
+    });
     const rm = row.querySelector(".rm");
     if(rm) rm.addEventListener("click", () => row.remove());
     rolesBox.appendChild(row);
