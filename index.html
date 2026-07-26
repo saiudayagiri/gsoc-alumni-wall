@@ -386,12 +386,15 @@
   .field .hint{font-size:11.5px;color:var(--ink-soft)}
   .rows-box{display:flex;flex-direction:column;gap:8px}
   .row-line{display:grid;gap:8px;align-items:center}
-  .row-line.r-road{grid-template-columns:1.1fr 1.3fr .7fr 28px}
+  .row-line.r-road{grid-template-columns:1.05fr 1.25fr .6fr auto}
   .row-line.r-soc{grid-template-columns:1fr 1.9fr 28px}
-  .row-line .rm{
-    all:unset;cursor:pointer;color:var(--ink-soft);font-size:15px;text-align:center;
-    width:28px;height:28px;border-radius:8px;
+  .row-ctl{display:flex;gap:2px;align-items:center}
+  .row-line .rm, .row-line .mv{
+    all:unset;cursor:pointer;color:var(--ink-soft);font-size:14px;text-align:center;
+    width:24px;height:26px;border-radius:7px;
   }
+  .row-line .mv:hover{color:var(--orange);background:var(--ground)}
+  .row-line .rm{font-size:15px}
   .row-line .rm:hover{color:var(--red)}
   .add-row{all:unset;cursor:pointer;color:var(--orange);font-size:13px;font-weight:700;margin-top:2px}
   .add-row:hover{text-decoration:underline}
@@ -905,7 +908,7 @@
   eventSel.addEventListener("change", syncEventRole);
   syncEventRole();
 
-  function addRoleRow(first, val){
+  function addRoleRow(val){
     if(rolesBox.children.length >= 8) return;
     const row = document.createElement("div");
     row.className = "row-line r-road";
@@ -916,9 +919,13 @@
       : `<select aria-label="Role">${ROLES.map(r => `<option${val && val.role===r ? " selected":""}>${r}</option>`).join("")}<option>${OTHER_ROLE}</option></select>`;
     row.innerHTML = `
       ${roleCell}
-      <input aria-label="Org" placeholder="Org / event (e.g. SymPy)"${first ? " required" : ""} value="${esc(val ? val.org : "")}">
+      <input aria-label="Org" placeholder="Org / event (e.g. SymPy)" value="${esc(val ? val.org : "")}">
       <input aria-label="Year" placeholder="Year" inputmode="numeric" maxlength="4" value="${esc(val ? val.year : "")}">
-      ${first ? "<span></span>" : '<button type="button" class="rm" aria-label="Remove role">✕</button>'}`;
+      <span class="row-ctl">
+        <button type="button" class="mv" data-up aria-label="Move up" title="Move up">↑</button>
+        <button type="button" class="mv" data-down aria-label="Move down" title="Move down">↓</button>
+        <button type="button" class="rm" aria-label="Remove role" title="Remove">✕</button>
+      </span>`;
     const sel = row.querySelector("select");
     if(sel) sel.addEventListener("change", () => {
       if(sel.value !== OTHER_ROLE) return;
@@ -928,8 +935,18 @@
       sel.replaceWith(inp);
       inp.focus();
     });
-    const rm = row.querySelector(".rm");
-    if(rm) rm.addEventListener("click", () => row.remove());
+    row.querySelector("[data-up]").addEventListener("click", () => {
+      const prev = row.previousElementSibling;
+      if(prev) rolesBox.insertBefore(row, prev);
+    });
+    row.querySelector("[data-down]").addEventListener("click", () => {
+      const next = row.nextElementSibling;
+      if(next) rolesBox.insertBefore(next, row);
+    });
+    row.querySelector(".rm").addEventListener("click", () => {
+      row.remove();
+      if(!rolesBox.children.length) addRoleRow();   // always keep one row
+    });
     rolesBox.appendChild(row);
   }
   function addSocialRow(val){
@@ -943,8 +960,8 @@
     row.querySelector(".rm").addEventListener("click", () => row.remove());
     socialsBox.appendChild(row);
   }
-  addRoleRow(true);
-  document.getElementById("add-role").addEventListener("click", () => addRoleRow(false));
+  addRoleRow();
+  document.getElementById("add-role").addEventListener("click", () => addRoleRow());
   document.getElementById("add-social").addEventListener("click", () => addSocialRow());
 
   const photoInput = document.getElementById("f-photo");
@@ -1004,7 +1021,7 @@
   });
 
   function resetRows(){
-    rolesBox.innerHTML = ""; addRoleRow(true);
+    rolesBox.innerHTML = ""; addRoleRow();
     socialsBox.innerHTML = "";
     photoData = ""; photoPreview.classList.remove("on");
     syncEventRole();
@@ -1023,7 +1040,7 @@
     if(!roleSel.disabled && ROLES.concat("GSoCer").includes(a.role)) roleSel.value = a.role;
     rolesBox.innerHTML = "";
     const rm = (a.roadmap && a.roadmap.length) ? a.roadmap : [null];
-    rm.forEach((r,i) => addRoleRow(i === 0, r));
+    rm.forEach(r => addRoleRow(r));
     socialsBox.innerHTML = "";
     (a.socials || []).forEach(s => addSocialRow(s));
     photoData = "";
