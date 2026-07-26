@@ -35,5 +35,7 @@
   "owner": "8b25553dba930d7d3f08cdaf6973fab9219c4f716c9cbe338a27f087955c52ee",
   "createdAt": "2026-07-26T15:08:42.507Z",
   "homeCity": "Delhi",
-  "updatedAt": "2026-07-26T16:59:05.828Z"
+  "updatedAt": "2026-07-26T17:15:19.132Z",
+  "currentCity": "Delhi",
+  "nativeCity": "Hyderabad"
 }
