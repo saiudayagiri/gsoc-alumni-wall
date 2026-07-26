@@ -550,9 +550,14 @@
       <input id="f-year" name="year" inputmode="numeric" maxlength="4" placeholder="2026">
     </div>
     <div class="field">
-      <label for="f-homecity">Your city</label>
-      <input id="f-homecity" name="homeCity" placeholder="Hyderabad">
-      <span class="hint">Shown on the back of your badge — helps alumni in your city find and connect with you.</span>
+      <label for="f-city-current">Current city</label>
+      <input id="f-city-current" name="currentCity" placeholder="Hyderabad">
+      <span class="hint">Where you live now — helps nearby alumni find you.</span>
+    </div>
+    <div class="field">
+      <label for="f-city-native">Native city</label>
+      <input id="f-city-native" name="nativeCity" placeholder="Vijayawada">
+      <span class="hint">Where you're from — both are shown on your badge back and searchable.</span>
     </div>
     <div class="field full">
       <span class="rows-label">Your GSoC roadmap *</span>
@@ -815,7 +820,8 @@
           ${avatar}
           <span class="bk-id">
             <p class="who">${esc(a.name)}</p>
-            <p class="bk-sub">${esc(a.role)} · ${esc(a.org)}${a.homeCity ? " · 📍 " + esc(a.homeCity) : ""}</p>
+            <p class="bk-sub">${esc(a.role)} · ${esc(a.org)}</p>
+            ${(a.currentCity || a.nativeCity || a.homeCity) ? `<p class="bk-sub">${a.currentCity || a.homeCity ? "📍 " + esc(a.currentCity || a.homeCity) : ""}${(a.currentCity || a.homeCity) && a.nativeCity ? " · " : ""}${a.nativeCity ? "🏠 " + esc(a.nativeCity) : ""}</p>` : ""}
           </span>
         </div>
         <div class="bk-scroll">
@@ -834,7 +840,7 @@
     const q = searchEl.value.trim().toLowerCase();
     const list = alumni.filter(a =>
       (activeYear === "All" || a.year === activeYear) &&
-      (!q || [a.name, a.org, a.city, a.event, a.homeCity,
+      (!q || [a.name, a.org, a.city, a.event, a.homeCity, a.currentCity, a.nativeCity,
               ...(a.roadmap || []).map(r => r.org + " " + r.role + " " + r.year)]
         .join(" ").toLowerCase().includes(q))
     );
@@ -1039,7 +1045,8 @@
     form.gsocUrl.value = a.gsocUrl || "";
     form.linkedin.value = a.linkedin || "";
     form.year.value = /^\d{4}$/.test(a.year) ? a.year : "";
-    form.homeCity.value = a.homeCity || "";
+    form.currentCity.value = a.currentCity || a.homeCity || "";
+    form.nativeCity.value = a.nativeCity || "";
     const evIdx = EVENTS.findIndex(ev =>
       ev.city && a.city && ev.city.toLowerCase() === a.city.toLowerCase());
     eventSel.value = String(evIdx >= 0 ? evIdx : EVENTS.length - 1);
@@ -1107,7 +1114,8 @@
       name, email, linkedin: li, gsocUrl,
       org: roadmap[0].org,
       event: ev.event, city: ev.city,
-      homeCity: form.homeCity.value.trim(),
+      currentCity: form.currentCity.value.trim(),
+      nativeCity: form.nativeCity.value.trim(),
       year: form.year.value.trim() || String(new Date().getFullYear()),
       role: roleSel.value,
       roadmap, socials,
