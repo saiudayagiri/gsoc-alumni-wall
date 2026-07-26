@@ -26,9 +26,12 @@
       "url": "github.com/saiudayagiri"
     }
   ],
-  "sigs": [],
+  "sigs": [
+    "Amanda Casari",
+    "Stephanie Taylor"
+  ],
   "photo": "",
   "owner": "8b25553dba930d7d3f08cdaf6973fab9219c4f716c9cbe338a27f087955c52ee",
   "createdAt": "2026-07-26T14:13:09.778Z",
-  "updatedAt": "2026-07-26T14:22:35.536Z"
+  "updatedAt": "2026-07-26T14:34:12.918Z"
 }
