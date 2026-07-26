@@ -309,7 +309,23 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bk-id .bk-sub{font-size:11.5px;color:var(--ink-soft);margin:0;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .bk-scroll{flex:1;min-height:0;overflow-y:auto;padding-right:4px}
+  .bk-wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+  .bk-scroll{flex:1;min-height:0;overflow-y:auto;padding-right:6px;
+    scrollbar-width:thin;scrollbar-color:var(--ink-soft) transparent}
+  .bk-scroll::-webkit-scrollbar{width:5px}
+  .bk-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  .bk-scroll:hover::-webkit-scrollbar-thumb{background:var(--ink-soft)}
+  .bk-more{
+    position:absolute;left:0;right:0;bottom:0;height:36px;pointer-events:none;
+    background:linear-gradient(transparent, var(--card) 75%);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;transition:opacity .2s ease;
+  }
+  .bk-more.on{opacity:1}
+  .bk-more span{
+    font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--orange);font-weight:800;padding-bottom:1px;
+  }
   .bk-lbl{
     font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--orange);font-weight:700;margin:0 0 6px;
@@ -824,9 +840,12 @@
             ${(a.currentCity || a.nativeCity || a.homeCity) ? `<p class="bk-sub">${a.currentCity || a.homeCity ? "📍 " + esc(a.currentCity || a.homeCity) : ""}${(a.currentCity || a.homeCity) && a.nativeCity ? " · " : ""}${a.nativeCity ? "🏠 " + esc(a.nativeCity) : ""}</p>` : ""}
           </span>
         </div>
-        <div class="bk-scroll">
-          <p class="bk-lbl">GSoC roadmap</p>
-          <ul class="roadmap">${steps || '<li><span class="what">GSoC alum</span></li>'}</ul>
+        <div class="bk-wrap">
+          <div class="bk-scroll">
+            <p class="bk-lbl">GSoC roadmap</p>
+            <ul class="roadmap">${steps || '<li><span class="what">GSoC alum</span></li>'}</ul>
+          </div>
+          <div class="bk-more"><span>scroll ↓</span></div>
         </div>
         ${a.gsocUrl ? `<a class="gsoc-chip" data-ext href="${esc(a.gsocUrl)}" target="_blank" rel="noopener noreferrer">&lt;/&gt; GSoC project ↗</a>` : ""}
         <div class="socialrow">${socialIcons(a)}</div>
@@ -874,6 +893,14 @@
         if(e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); }
       });
       grid.appendChild(item);
+      const sc = item.querySelector(".bk-scroll");
+      if(sc){
+        const more = item.querySelector(".bk-more");
+        const check = () => more.classList.toggle("on",
+          sc.scrollHeight - sc.clientHeight - sc.scrollTop > 8);
+        sc.addEventListener("scroll", check);
+        requestAnimationFrame(check);
+      }
     });
   }
 
