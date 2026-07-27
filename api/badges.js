@@ -71,14 +71,15 @@ async function savePhoto(id, dataUrl) {
   const buf = Buffer.from(m[2], 'base64');
   if (buf.length < 100 || buf.length > 500000) return '';
   const ext = m[1] === 'jpeg' ? 'jpg' : m[1];
-  const res = await put(`${PHOTOS}${id}.${Date.now()}.${ext}`, buf, {
+  await put(`${PHOTOS}${id}.${Date.now()}.${ext}`, buf, {
     access: 'public',
     addRandomSuffix: false,
     contentType: `image/${m[1]}`,
     cacheControlMaxAge: 31536000,
   });
   await ghBackupFile(`data/photos/${id}.${ext}`, m[2], `backup: photo for badge ${id}`);
-  return res.url;
+  // host-independent URL — resolved by api/photo.js on whatever host serves us
+  return `/api/photo?id=${id}`;
 }
 
 // commit any file (base64 content) to the repo — best effort, never blocks
