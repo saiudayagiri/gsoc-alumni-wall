@@ -22,9 +22,15 @@
       "year": "2025"
     }
   ],
-  "socials": [],
+  "socials": [
+    {
+      "platform": "X",
+      "url": "jackedAJ"
+    }
+  ],
   "sigs": [],
   "photo": "/api/photo?id=1785159390077-efd9mg",
   "owner": "8523ee242f3830230ec82a1fccaf82f1cb5a36756c9e2fd351c6a050b12f1d46",
-  "createdAt": "2026-07-27T13:36:31.053Z"
+  "createdAt": "2026-07-27T13:36:31.053Z",
+  "updatedAt": "2026-07-27T14:21:47.955Z"
 }
