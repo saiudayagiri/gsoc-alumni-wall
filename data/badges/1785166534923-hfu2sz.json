@@ -1,0 +1,39 @@
+{
+  "id": "1785166534923-hfu2sz",
+  "name": "Anusha",
+  "linkedin": "https://www.linkedin.com/in/anusha-singh01/",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2025/projects/pqUXYPjf",
+  "org": "Ceph",
+  "event": "Alumni CAMP India 2026",
+  "city": "Delhi",
+  "currentCity": "Gurugram",
+  "nativeCity": "Gurugram",
+  "year": "2026",
+  "role": "Attendee",
+  "roadmap": [
+    {
+      "role": "Contributor",
+      "org": "Ceph",
+      "year": "2025"
+    },
+    {
+      "role": "Attendee",
+      "org": "Alumni Camp, Delhi",
+      "year": "2026"
+    }
+  ],
+  "socials": [
+    {
+      "platform": "GitHub",
+      "url": "https://github.com/Anusha0501"
+    },
+    {
+      "platform": "Website",
+      "url": "https://anusha-dev-pi.vercel.app/"
+    }
+  ],
+  "sigs": [],
+  "photo": "/api/photo?id=1785166534923-hfu2sz",
+  "owner": "07a4aafec06d312b821368a73e719338ebaf6e9b526aac934ae72d027c39dc04",
+  "createdAt": "2026-07-27T15:35:35.700Z"
+}
