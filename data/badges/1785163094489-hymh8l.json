@@ -1,0 +1,49 @@
+{
+  "id": "1785163094489-hymh8l",
+  "name": "Divyanshu Garg",
+  "linkedin": "https://www.linkedin.com/in/divyanshugarg36/",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2022/projects/GW3ONedb",
+  "org": "BRL-CAD",
+  "event": "Alumni CAMP India 2026",
+  "city": "Delhi",
+  "currentCity": "Ludhiana",
+  "nativeCity": "Ludhiana",
+  "year": "2026",
+  "role": "Mentor",
+  "roadmap": [
+    {
+      "role": "Contributor",
+      "org": "BRL-CAD",
+      "year": "2022"
+    },
+    {
+      "role": "Mentor",
+      "org": "BRL-CAD",
+      "year": "2024"
+    },
+    {
+      "role": "Mentor",
+      "org": "BRL-CAD",
+      "year": "2025"
+    },
+    {
+      "role": "Mentor",
+      "org": "BRL-CAD",
+      "year": "2026"
+    }
+  ],
+  "socials": [
+    {
+      "platform": "GitHub",
+      "url": "divyanshugarg36"
+    },
+    {
+      "platform": "Instagram",
+      "url": "divyanshugarg36"
+    }
+  ],
+  "sigs": [],
+  "photo": "/api/photo?id=1785163094489-hymh8l",
+  "owner": "bb98cbd7a6081e96c00b712f05a0980d78ee12ebdcb81915846a97c4bc54df9c",
+  "createdAt": "2026-07-27T14:38:15.339Z"
+}
