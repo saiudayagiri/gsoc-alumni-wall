@@ -15,11 +15,6 @@
       "year": "2025"
     },
     {
-      "role": "Mentor",
-      "org": "Sympy",
-      "year": "2026"
-    },
-    {
       "role": "Attendee",
       "org": "Alumni CAMP India, Delhi",
       "year": "2026"
@@ -43,7 +38,7 @@
   "owner": "8b25553dba930d7d3f08cdaf6973fab9219c4f716c9cbe338a27f087955c52ee",
   "createdAt": "2026-07-26T15:08:42.507Z",
   "homeCity": "Delhi",
-  "updatedAt": "2026-07-26T17:52:23.848Z",
+  "updatedAt": "2026-07-27T05:57:49.712Z",
   "currentCity": "Delhi",
   "nativeCity": "Hyderabad"
 }
