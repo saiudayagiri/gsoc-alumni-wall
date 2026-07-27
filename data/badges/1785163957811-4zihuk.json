@@ -1,0 +1,30 @@
+{
+  "id": "1785163957811-4zihuk",
+  "name": "Ishan Mitra",
+  "linkedin": "https://www.linkedin.com/in/ishan-mitra/",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2025/projects/jvtFHWxr",
+  "org": "rocket.chat",
+  "event": "Alumni CAMP India 2026",
+  "city": "Delhi",
+  "currentCity": "Kolkata",
+  "nativeCity": "Kolkata",
+  "year": "2025",
+  "role": "GSoCer",
+  "roadmap": [
+    {
+      "role": "Contributor",
+      "org": "rocket.chat",
+      "year": "2025"
+    }
+  ],
+  "socials": [
+    {
+      "platform": "GitHub",
+      "url": "ishanmitra"
+    }
+  ],
+  "sigs": [],
+  "photo": "/api/photo?id=1785163957811-4zihuk",
+  "owner": "3e1993c5e27a3ba23ceda7bde99c30f4fa2bb51ecca29c16f229de036ffb6233",
+  "createdAt": "2026-07-27T14:52:38.732Z"
+}
