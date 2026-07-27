@@ -17,9 +17,15 @@
       "year": "2026"
     }
   ],
-  "socials": [],
+  "socials": [
+    {
+      "platform": "GitHub",
+      "url": "https://github.com/abhay1999"
+    }
+  ],
   "sigs": [],
   "photo": "",
   "owner": "7e14f81258e414ee989d6be12354d25507e07cf66fc4891715668e754a47c52c",
-  "createdAt": "2026-07-27T15:46:53.389Z"
+  "createdAt": "2026-07-27T15:46:53.389Z",
+  "updatedAt": "2026-07-27T15:48:58.882Z"
 }
