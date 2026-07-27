@@ -1,3 +1,7 @@
 node_modules
 .vercel
 .env*
+package-lock.json
+
+# admin page — deployed to Vercel but kept out of the public repo
+mini.html

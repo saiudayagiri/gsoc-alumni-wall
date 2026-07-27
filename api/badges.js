@@ -1,5 +1,5 @@
 import { put, del, list } from '@vercel/blob';
-import { createHash } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 
 // One immutable blob per badge revision (badges/<id>.<rev>.json). The Blob CDN
 // caches file content ~forever, so files are never rewritten: edits write a new
@@ -13,6 +13,17 @@ const SAFE_ID = /^[0-9]+-[a-z0-9]+$/;
 // Emails are the edit key but are never stored or published — only this hash.
 const ownerHash = (email) =>
   createHash('sha256').update(String(email).trim().toLowerCase()).digest('hex');
+
+// Admin auth: the secret lives only in Vercel env (ADMIN_KEY), never in the repo.
+// The key arrives in the x-admin-key header so it never lands in URL/request logs.
+function isAdminReq(req) {
+  const provided = String(req.headers['x-admin-key'] || '');
+  const secret = String(process.env.ADMIN_KEY || '');
+  if (!secret || !provided) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(secret);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 const sanitizeRoadmap = (v) =>
   (Array.isArray(v) ? v : [])
@@ -184,6 +195,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   try {
     if (req.method === 'GET') {
+      if (req.query.checkAdmin) return res.status(200).json({ admin: isAdminReq(req) });
       const all = await readAll();
       const email = clean(req.query.email, 200);
       if (email) {
@@ -271,7 +283,7 @@ export default async function handler(req, res) {
       const all = await readAll();
       const cur = all.find((it) => it.entry.id === id);
       if (!cur) return res.status(200).json({ ok: true });
-      if (cur.entry.owner && (!email || cur.entry.owner !== ownerHash(email))) {
+      if (!isAdminReq(req) && cur.entry.owner && (!email || cur.entry.owner !== ownerHash(email))) {
         return res.status(403).json({ error: 'this email does not match the badge owner' });
       }
       await del(cur.pathname);
