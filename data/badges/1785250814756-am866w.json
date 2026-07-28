@@ -1,0 +1,64 @@
+{
+  "id": "1785250814756-am866w",
+  "name": "Sarrah Bastawala",
+  "linkedin": "https://www.linkedin.com/in/sarrah-bastawala/",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2022/projects/XMUiHWHO",
+  "org": "GNU Octave - https://summerofcode.withgoogle.com/myprojects/details/fg4hsOK0",
+  "event": "Alumni CAMP India 2026",
+  "city": "Delhi",
+  "currentCity": "Mumbai",
+  "nativeCity": "Mumbai",
+  "year": "2025",
+  "role": "Speaker",
+  "roadmap": [
+    {
+      "role": "Contributor",
+      "org": "GNU Octave - https://summerofcode.withgoogle.com/myprojects/details/fg4hsOK0",
+      "year": "2022"
+    },
+    {
+      "role": "Speaker",
+      "org": "GSoC Lightning Talks 2022",
+      "year": "2022"
+    },
+    {
+      "role": "Contributor",
+      "org": "INCF - https://summerofcode.withgoogle.com/myprojects/details/XMUiHWHO",
+      "year": "2024"
+    },
+    {
+      "role": "Speaker",
+      "org": "GSoC Lightning Talks 2024 - https://www.youtube.com/watch?v=AxeEP6nG1S0",
+      "year": "2024"
+    },
+    {
+      "role": "Mentor",
+      "org": "INCF - https://summerofcode.withgoogle.com/organizations/incf/projects/details/5",
+      "year": "2025"
+    },
+    {
+      "role": "Attendee",
+      "org": "GSoC Mentor Summit - Munich, Germany",
+      "year": "2025"
+    },
+    {
+      "role": "Attendee",
+      "org": "Alumni CAMP India 2026 - delhi",
+      "year": "2026"
+    }
+  ],
+  "socials": [
+    {
+      "platform": "GitHub",
+      "url": "https://github.com/sarrah-basta"
+    },
+    {
+      "platform": "Website",
+      "url": "https://sarrah-basta.github.io/blogs/"
+    }
+  ],
+  "sigs": [],
+  "photo": "/api/photo?id=1785250814756-am866w",
+  "owner": "ffb5c9332b26cc247c03be8a478e92fa7493e3ad12abef361cdf652c766173b2",
+  "createdAt": "2026-07-28T15:00:15.672Z"
+}
