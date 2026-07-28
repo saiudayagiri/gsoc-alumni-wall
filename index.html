@@ -804,8 +804,16 @@
     <polygon points="60,38 68,43 68,52 60,57 52,52 52,43" fill="#F9AB00"/>
   </svg>`;
 
-  function badgeFront(a){
-    const sigNames = (a.sigs && a.sigs.length) ? a.sigs : ["Amanda Casari","Stephanie Taylor"];
+  // three signatories, two per card — rotate the pairs so all three stay
+  // balanced across the wall, now and as new cards are added
+  const SIG_PAIRS = [
+    ["Amanda Casari","Stephanie Taylor"],
+    ["Stephanie Taylor","Mary Radomile"],
+    ["Mary Radomile","Amanda Casari"]
+  ];
+
+  function badgeFront(a, fallbackPair){
+    const sigNames = (a.sigs && a.sigs.length) ? a.sigs : (fallbackPair || SIG_PAIRS[0]);
     const sigs = sigNames.map((s,i) =>
       `<div class="sig script${i===1?" blue":""}">${esc(s)}</div>`).join("");
     return `
@@ -899,7 +907,11 @@
       grid.innerHTML = '<p class="empty">No badges match — try another name, org, or year.</p>';
       return;
     }
+    let sigTick = 0;   // advances only for cards using the rotating fallback
     list.forEach(a => {
+      const usesFallback = !(a.sigs && a.sigs.length);
+      const pair = SIG_PAIRS[sigTick % SIG_PAIRS.length];
+      if(usesFallback) sigTick++;
       const item = document.createElement("div");
       item.className = "hang-sm" + (a.sample ? " is-sample" : "");
       item.innerHTML = `
@@ -908,7 +920,7 @@
         <div class="flipcard" role="button" tabindex="0"
              aria-label="Badge of ${esc(a.name)}, ${esc(a.org)} — activate to flip">
           <div class="card3d">
-            ${badgeFront(a)}
+            ${badgeFront(a, pair)}
             ${badgeBack(a)}
           </div>
         </div>`;
