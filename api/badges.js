@@ -88,33 +88,20 @@ async function savePhoto(id, dataUrl) {
     contentType: `image/${m[1]}`,
     cacheControlMaxAge: 31536000,
   });
-  await ghBackupFile(`data/photos/${id}.${ext}`, m[2], `backup: photo for badge ${id}`);
-  // host-independent URL — resolved by api/photo.js on whatever host serves us
+  // Photos live only in Vercel Blob — deliberately NOT committed to the public
+  // Git repo (see issue #1). The badge JSON stores this host-independent URL,
+  // resolved by api/photo.js against whatever storage serves us.
   return `/api/photo?id=${id}`;
 }
 
-// commit any file (base64 content) to the repo — best effort, never blocks
-async function ghBackupFile(path, base64Content, message) {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) return;
-  const url = `https://api.github.com/repos/${GH_REPO}/contents/${path}`;
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'gsoc-alumni-wall',
-    'Content-Type': 'application/json',
-  };
+// Remove every stored photo revision for a badge from Blob. Called on delete so
+// a taken-down badge leaves no image behind. Best effort — never blocks delete.
+async function deletePhotos(id) {
   try {
-    let sha;
-    const existing = await fetch(url, { headers });
-    if (existing.ok) sha = (await existing.json()).sha;
-    await fetch(url, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({ message, content: base64Content, ...(sha ? { sha } : {}) }),
-    });
+    const { blobs } = await list({ prefix: `${PHOTOS}${id}.` });
+    await Promise.all(blobs.map((b) => del(b.url)));
   } catch (e) {
-    console.error('github photo backup failed', e);
+    console.error('photo cleanup failed', e);
   }
 }
 
@@ -287,6 +274,7 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: 'this email does not match the badge owner' });
       }
       await del(cur.pathname);
+      await deletePhotos(id);
       await ghBackup('remove', id, null);
       return res.status(200).json({ ok: true });
     }
