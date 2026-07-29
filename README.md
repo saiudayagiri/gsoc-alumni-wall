@@ -5,7 +5,7 @@ Every alum hangs as a badge modeled on a real GSoC event badge — flip a card t
 see their GSoC roadmap (contributor years, mentor years, orgs) and open their
 LinkedIn to connect.
 
-**Live site:** https://gsoc-alumni-wall.vercel.app
+**Live site:** https://gsocalumni.org
 
 > An unofficial community project, not affiliated with Google.
 > "Google Summer of Code" belongs to Google LLC.
