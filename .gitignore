@@ -5,3 +5,6 @@ package-lock.json
 
 # admin page — deployed to Vercel but kept out of the public repo
 mini.html
+
+# user-uploaded profile photos live only in Vercel Blob, never in the repo (issue #1)
+data/photos/
