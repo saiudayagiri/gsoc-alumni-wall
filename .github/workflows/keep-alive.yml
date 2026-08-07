@@ -1,0 +1,18 @@
+name: keep-alive
+
+# Second, independent keep-alive (in addition to the Vercel Cron in vercel.json).
+# Pings the live wall daily so the Supabase project never pauses for inactivity.
+on:
+  schedule:
+    - cron: "0 18 * * *"   # daily at 18:00 UTC (offset from the Vercel cron at 06:00)
+  workflow_dispatch: {}      # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the wall (runs a Supabase query, keeps it awake)
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://gsocalumni.org/api/keepalive)
+          echo "keepalive -> $code"
+          test "$code" = "200"
