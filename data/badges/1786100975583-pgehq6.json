@@ -1,12 +1,12 @@
 {
   "id": "1786100975583-pgehq6",
-  "name": "fin3",
-  "org": "O",
+  "name": "fin3 ed",
+  "org": "O2",
   "event": "GSoC Alumni",
   "city": "",
   "currentCity": "",
   "nativeCity": "",
-  "year": "2024",
+  "year": "2026",
   "role": "GSoCer",
   "linkedin": "c",
   "gsocUrl": "https://summerofcode.withgoogle.com/archive/2024/projects/FIN3x2183",
@@ -14,13 +14,13 @@
   "photo": "",
   "roadmap": [
     {
-      "org": "O",
-      "role": "Contributor",
-      "year": "2024"
+      "org": "O2",
+      "role": "Mentor",
+      "year": "2025"
     }
   ],
   "socials": [],
   "sigs": [],
   "createdAt": "2026-08-07T11:09:35.583+00:00",
-  "updatedAt": null
+  "updatedAt": "2026-08-07T11:09:37.517+00:00"
 }
