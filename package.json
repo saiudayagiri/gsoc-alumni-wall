@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
     "@vercel/blob": "^1.1.1"
   }
 }

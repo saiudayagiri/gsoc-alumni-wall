@@ -865,8 +865,9 @@
         <span class="yr">${esc(r.year)}</span>
         <span class="what">${esc(r.role)}</span> <span class="where">· ${esc(r.org)}</span>
       </li>`).join("");
+    // if a photo fails to load (e.g. an old image not yet migrated), fall back to initials
     const avatar = a.photo
-      ? `<img class="avatar" src="${esc(a.photo)}" alt="">`
+      ? `<img class="avatar" src="${esc(a.photo)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'avatar avatar-txt',textContent:'${esc(initials(a.name))}'}))">`
       : `<span class="avatar avatar-txt">${esc(initials(a.name))}</span>`;
     const mine = a.community && (!apiMode || myIds().includes(a.id));
     return `

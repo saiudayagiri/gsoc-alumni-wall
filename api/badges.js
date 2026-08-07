@@ -1,21 +1,23 @@
-import { put, del, list } from '@vercel/blob';
+import { createClient } from '@supabase/supabase-js';
 import { createHash, timingSafeEqual } from 'crypto';
 
-// One immutable blob per badge revision (badges/<id>.<rev>.json). The Blob CDN
-// caches file content ~forever, so files are never rewritten: edits write a new
-// revision and delete the old file. list() metadata is the source of truth.
-const PREFIX = 'badges/';
-const PHOTOS = 'photos/';
+// Primary store: Supabase Postgres (one query per read — no per-record fan-out).
+// Photos: Supabase Storage bucket `photos` (public), never committed to Git (#1).
+// Backup: badge JSON is still mirrored to data/badges/ in the GitHub repo, which
+// is what the wall was rebuilt from — kept as the durable, portable safety net.
+const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
+const BUCKET = 'photos';
 const GH_REPO = 'saiudayagiri/gsoc-alumni-wall';
 
 const clean = (s, max = 200) => String(s ?? '').slice(0, max).trim();
 const SAFE_ID = /^[0-9]+-[a-z0-9]+$/;
-// Emails are the edit key but are never stored or published — only this hash.
+// Emails are the edit key but are never stored — only this hash.
 const ownerHash = (email) =>
   createHash('sha256').update(String(email).trim().toLowerCase()).digest('hex');
 
-// Admin auth: the secret lives only in Vercel env (ADMIN_KEY), never in the repo.
-// The key arrives in the x-admin-key header so it never lands in URL/request logs.
+// Admin auth: secret lives only in Vercel env (ADMIN_KEY), never in the repo.
 function isAdminReq(req) {
   const provided = String(req.headers['x-admin-key'] || '');
   const secret = String(process.env.ADMIN_KEY || '');
@@ -40,108 +42,28 @@ const sanitizeSocials = (v) =>
 const sanitizeSigs = (v) =>
   (Array.isArray(v) ? v : []).slice(0, 4).map((s) => clean(s, 60)).filter(Boolean);
 
+// DB row (snake_case) -> API entry (camelCase, as the frontend expects)
+const fromRow = (r) => ({
+  id: r.id,
+  name: r.name,
+  org: r.org,
+  event: r.event,
+  city: r.city,
+  currentCity: r.current_city,
+  nativeCity: r.native_city,
+  year: r.year,
+  role: r.role,
+  linkedin: r.linkedin,
+  gsocUrl: r.gsoc_url,
+  owner: r.owner,
+  photo: r.photo,
+  roadmap: r.roadmap || [],
+  socials: r.socials || [],
+  sigs: r.sigs || [],
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+});
 const publicView = ({ owner, ...rest }) => rest;
-
-async function readAll() {
-  const { blobs } = await list({ prefix: PREFIX, limit: 1000 });
-  const items = await Promise.all(
-    blobs.map(async (b) => {
-      try {
-        const r = await fetch(b.url);
-        return r.ok ? { entry: await r.json(), pathname: b.pathname } : null;
-      } catch {
-        return null;
-      }
-    })
-  );
-  // several revisions of a badge may coexist briefly — keep the newest
-  const byId = new Map();
-  for (const it of items.filter(Boolean)) {
-    const rev = (e) => e.updatedAt || e.createdAt || '';
-    const prev = byId.get(it.entry.id);
-    if (!prev || rev(it.entry) > rev(prev.entry)) byId.set(it.entry.id, it);
-  }
-  return [...byId.values()];
-}
-
-async function writeEntry(entry, oldPathname) {
-  await put(`${PREFIX}${entry.id}.${Date.now()}.json`, JSON.stringify(entry), {
-    access: 'public',
-    addRandomSuffix: false,
-    contentType: 'application/json',
-    cacheControlMaxAge: 31536000,
-  });
-  if (oldPathname) {
-    try { await del(oldPathname); } catch {}
-  }
-}
-
-async function savePhoto(id, dataUrl) {
-  const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
-  if (!m) return '';
-  const buf = Buffer.from(m[2], 'base64');
-  if (buf.length < 100 || buf.length > 500000) return '';
-  const ext = m[1] === 'jpeg' ? 'jpg' : m[1];
-  await put(`${PHOTOS}${id}.${Date.now()}.${ext}`, buf, {
-    access: 'public',
-    addRandomSuffix: false,
-    contentType: `image/${m[1]}`,
-    cacheControlMaxAge: 31536000,
-  });
-  // Photos live only in Vercel Blob — deliberately NOT committed to the public
-  // Git repo (see issue #1). The badge JSON stores this host-independent URL,
-  // resolved by api/photo.js against whatever storage serves us.
-  return `/api/photo?id=${id}`;
-}
-
-// Remove every stored photo revision for a badge from Blob. Called on delete so
-// a taken-down badge leaves no image behind. Best effort — never blocks delete.
-async function deletePhotos(id) {
-  try {
-    const { blobs } = await list({ prefix: `${PHOTOS}${id}.` });
-    await Promise.all(blobs.map((b) => del(b.url)));
-  } catch (e) {
-    console.error('photo cleanup failed', e);
-  }
-}
-
-// Best-effort mirror into the GitHub repo (data/badges/<id>.json) so the wall
-// survives losing the Blob store. Stores the owner hash, never a raw email.
-async function ghBackup(action, id, entry) {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) return;
-  const url = `https://api.github.com/repos/${GH_REPO}/contents/data/badges/${id}.json`;
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'gsoc-alumni-wall',
-    'Content-Type': 'application/json',
-  };
-  try {
-    let sha;
-    const existing = await fetch(url, { headers });
-    if (existing.ok) sha = (await existing.json()).sha;
-    if (action === 'save') {
-      await fetch(url, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          message: `backup: badge ${id} (${entry.name})`,
-          content: Buffer.from(JSON.stringify(entry, null, 2)).toString('base64'),
-          ...(sha ? { sha } : {}),
-        }),
-      });
-    } else if (action === 'remove' && sha) {
-      await fetch(url, {
-        method: 'DELETE',
-        headers,
-        body: JSON.stringify({ message: `backup: remove badge ${id}`, sha }),
-      });
-    }
-  } catch (e) {
-    console.error('github backup failed', e);
-  }
-}
 
 function buildFields(b) {
   return {
@@ -161,11 +83,18 @@ function buildFields(b) {
   };
 }
 
+// fields (camelCase) -> DB columns (snake_case)
+const toRow = (f, extra = {}) => ({
+  name: f.name, org: f.org, event: f.event, city: f.city,
+  current_city: f.currentCity, native_city: f.nativeCity,
+  year: f.year, role: f.role, linkedin: f.linkedin, gsoc_url: f.gsocUrl,
+  roadmap: f.roadmap, socials: f.socials, sigs: f.sigs, ...extra,
+});
+
 const normUrl = (u) => String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
 const GSOC_URL_RE = /^https?:\/\/(www\.)?summerofcode\.withgoogle\.com\/archive\/\d{4}\/projects\/[\w-]+\/?$/i;
 
-// Whatever the client sends — archive URL, /myprojects/details/<id>, or a bare
-// id — take the unique id after the last slash and rebuild the archive template.
+// Any pasted form -> canonical archive URL using the id after the last slash.
 function normalizeGsocUrl(v, fallbackYear) {
   v = String(v || '').trim();
   if (!v) return '';
@@ -178,19 +107,88 @@ function normalizeGsocUrl(v, fallbackYear) {
   return `https://summerofcode.withgoogle.com/archive/${year}/projects/${id}`;
 }
 
+const extFromDataUrl = (m) => (m[1] === 'jpeg' ? 'jpg' : m[1]);
+
+async function savePhoto(id, dataUrl) {
+  const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
+  if (!m) return '';
+  const buf = Buffer.from(m[2], 'base64');
+  if (buf.length < 100 || buf.length > 500000) return '';
+  const ext = extFromDataUrl(m);
+  await deletePhotos(id); // drop any prior revision (different ext)
+  const { error } = await sb.storage.from(BUCKET).upload(`${id}.${ext}`, buf, {
+    contentType: `image/${m[1]}`, upsert: true, cacheControl: '31536000',
+  });
+  if (error) { console.error('photo upload failed', error.message); return ''; }
+  return `/api/photo?id=${id}`; // host-independent; resolved by api/photo.js
+}
+
+async function deletePhotos(id) {
+  try {
+    await sb.storage.from(BUCKET).remove([`${id}.jpg`, `${id}.png`, `${id}.webp`]);
+  } catch (e) {
+    console.error('photo cleanup failed', e);
+  }
+}
+
+// Best-effort mirror of the badge JSON into the GitHub repo (data/badges/<id>.json)
+// as a durable, portable backup. Stores the owner hash, never a raw email.
+async function ghBackup(action, id, entry) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return;
+  const url = `https://api.github.com/repos/${GH_REPO}/contents/data/badges/${id}.json`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'gsoc-alumni-wall',
+    'Content-Type': 'application/json',
+  };
+  try {
+    let sha;
+    const existing = await fetch(url, { headers });
+    if (existing.ok) sha = (await existing.json()).sha;
+    if (action === 'save') {
+      await fetch(url, {
+        method: 'PUT', headers,
+        body: JSON.stringify({
+          message: `backup: badge ${id} (${entry.name})`,
+          content: Buffer.from(JSON.stringify(entry, null, 2)).toString('base64'),
+          ...(sha ? { sha } : {}),
+        }),
+      });
+    } else if (action === 'remove' && sha) {
+      await fetch(url, {
+        method: 'DELETE', headers,
+        body: JSON.stringify({ message: `backup: remove badge ${id}`, sha }),
+      });
+    }
+  } catch (e) {
+    console.error('github backup failed', e);
+  }
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 'no-store');
   try {
     if (req.method === 'GET') {
-      if (req.query.checkAdmin) return res.status(200).json({ admin: isAdminReq(req) });
-      const all = await readAll();
+      if (req.query.checkAdmin) {
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({ admin: isAdminReq(req) });
+      }
       const email = clean(req.query.email, 200);
       if (email) {
-        const mine = all.filter((it) => it.entry.owner && it.entry.owner === ownerHash(email));
-        return res.status(200).json({ badges: mine.map((it) => publicView(it.entry)) });
+        res.setHeader('Cache-Control', 'no-store');
+        const { data, error } = await sb.from('badges').select('*').eq('owner', ownerHash(email));
+        if (error) throw error;
+        return res.status(200).json({ badges: data.map((r) => publicView(fromRow(r))) });
       }
-      return res.status(200).json({ badges: all.map((it) => publicView(it.entry)) });
+      // public wall — Postgres reads are cheap; no CDN caching so edits show immediately
+      const { data, error } = await sb.from('badges').select('*').order('created_at', { ascending: true });
+      if (error) throw error;
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json({ badges: data.map((r) => publicView(fromRow(r)) ) });
     }
+
+    res.setHeader('Cache-Control', 'no-store');
 
     if (req.method === 'POST') {
       const b = req.body || {};
@@ -207,23 +205,20 @@ export default async function handler(req, res) {
       if (!fields.org && fields.roadmap.length) fields.org = fields.roadmap[0].org;
       if (!fields.org) return res.status(400).json({ error: 'add at least one roadmap row with your org' });
 
-      const all = await readAll();
-      if (all.length >= 500) return res.status(429).json({ error: 'the wall is full for now' });
-      // the GSoC project URL is the unique id of an alum
-      if (all.some((it) => normUrl(it.entry.gsocUrl) === normUrl(fields.gsocUrl))) {
-        return res.status(409).json({ error: 'this GSoC project URL is already on the wall — use "edit my badge" instead' });
-      }
-
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const photo = b.photoData ? await savePhoto(id, b.photoData) : '';
-      const entry = {
-        id,
-        ...fields,
-        photo,
-        owner: ownerHash(email),
-        createdAt: new Date().toISOString(),
-      };
-      await writeEntry(entry, null);
+      const row = toRow(fields, {
+        id, owner: ownerHash(email), photo, created_at: new Date().toISOString(),
+      });
+      const { data, error } = await sb.from('badges').insert(row).select().single();
+      if (error) {
+        if (error.code === '23505') { // unique gsoc_url
+          await deletePhotos(id);
+          return res.status(409).json({ error: 'this GSoC project URL is already on the wall — use "edit my badge" instead' });
+        }
+        throw error;
+      }
+      const entry = fromRow(data);
       await ghBackup('save', id, entry);
       return res.status(201).json({ badge: publicView(entry) });
     }
@@ -233,11 +228,9 @@ export default async function handler(req, res) {
       const id = clean(b.id, 60);
       const email = clean(b.email, 200);
       if (!SAFE_ID.test(id) || !email) return res.status(400).json({ error: 'id and email required' });
-      const all = await readAll();
-      const cur = all.find((it) => it.entry.id === id);
+      const { data: cur } = await sb.from('badges').select('*').eq('id', id).maybeSingle();
       if (!cur) return res.status(404).json({ error: 'badge not found' });
-      // badges saved before edit existed have no owner — first valid edit claims them
-      if (cur.entry.owner && cur.entry.owner !== ownerHash(email)) {
+      if (cur.owner && cur.owner !== ownerHash(email)) {
         return res.status(403).json({ error: 'this email does not match the badge owner' });
       }
       const fields = buildFields(b);
@@ -246,19 +239,18 @@ export default async function handler(req, res) {
       }
       const contribYear = (fields.roadmap.find((r) => r.role === 'Contributor' && /^\d{4}$/.test(r.year)) || {}).year;
       fields.gsocUrl = normalizeGsocUrl(fields.gsocUrl, contribYear || (/^\d{4}$/.test(fields.year) ? fields.year : ''));
-      if (!fields.gsocUrl) {
-        return res.status(400).json({ error: 'could not read a project id from gsocUrl — paste your GSoC project link in any form' });
-      }
+      if (!fields.gsocUrl) return res.status(400).json({ error: 'could not read a project id from gsocUrl' });
       if (!fields.org && fields.roadmap.length) fields.org = fields.roadmap[0].org;
-      const photo = b.photoData ? await savePhoto(id, b.photoData) : (cur.entry.photo || '');
-      const entry = {
-        ...cur.entry,
-        ...fields,
-        photo,
-        owner: cur.entry.owner || ownerHash(email),
-        updatedAt: new Date().toISOString(),
-      };
-      await writeEntry(entry, cur.pathname);
+      const photo = b.photoData ? await savePhoto(id, b.photoData) : (cur.photo || '');
+      const row = toRow(fields, {
+        owner: cur.owner || ownerHash(email), photo, updated_at: new Date().toISOString(),
+      });
+      const { data, error } = await sb.from('badges').update(row).eq('id', id).select().single();
+      if (error) {
+        if (error.code === '23505') return res.status(409).json({ error: 'that GSoC project URL is already on the wall' });
+        throw error;
+      }
+      const entry = fromRow(data);
       await ghBackup('save', id, entry);
       return res.status(200).json({ badge: publicView(entry) });
     }
@@ -267,13 +259,12 @@ export default async function handler(req, res) {
       const id = clean(req.query.id, 60);
       const email = clean(req.query.email, 200);
       if (!SAFE_ID.test(id)) return res.status(400).json({ error: 'valid id required' });
-      const all = await readAll();
-      const cur = all.find((it) => it.entry.id === id);
+      const { data: cur } = await sb.from('badges').select('owner').eq('id', id).maybeSingle();
       if (!cur) return res.status(200).json({ ok: true });
-      if (!isAdminReq(req) && cur.entry.owner && (!email || cur.entry.owner !== ownerHash(email))) {
+      if (!isAdminReq(req) && cur.owner && (!email || cur.owner !== ownerHash(email))) {
         return res.status(403).json({ error: 'this email does not match the badge owner' });
       }
-      await del(cur.pathname);
+      await sb.from('badges').delete().eq('id', id);
       await deletePhotos(id);
       await ghBackup('remove', id, null);
       return res.status(200).json({ ok: true });
