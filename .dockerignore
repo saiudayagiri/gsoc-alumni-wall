@@ -1,0 +1,10 @@
+node_modules
+.git
+.github
+.vercel
+.env*
+data
+db
+scripts
+deploy
+*.md

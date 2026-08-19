@@ -1,0 +1,104 @@
+# GSoC Alumni Badge Wall on Kubernetes / Rancher.
+#
+# 1. Build & push the image:
+#      docker build -t ghcr.io/saiudayagiri/gsoc-alumni-wall:v1 .
+#      docker push ghcr.io/saiudayagiri/gsoc-alumni-wall:v1
+#
+# 2. Create the env Secret from your local .env.local (NEVER commit real values):
+#      kubectl create secret generic gsoc-wall-env \
+#        --from-literal=SUPABASE_URL="https://cvxkfzamvugdhjbzmtcv.supabase.co" \
+#        --from-literal=SUPABASE_SERVICE_ROLE_KEY="<service_role key>" \
+#        --from-literal=ADMIN_KEY="<admin key>" \
+#        --from-literal=GITHUB_TOKEN="<github token>"
+#
+# 3. If the ghcr package is private, create a pull secret and uncomment
+#    imagePullSecrets below:
+#      kubectl create secret docker-registry ghcr-pull \
+#        --docker-server=ghcr.io --docker-username=saiudayagiri \
+#        --docker-password=<gh PAT with read:packages>
+#
+# 4. Set the host + issuer to match your cluster, then:  kubectl apply -f deploy/k8s.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gsoc-wall
+  labels: { app: gsoc-wall }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: gsoc-wall }
+  template:
+    metadata:
+      labels: { app: gsoc-wall }
+    spec:
+      # imagePullSecrets:
+      #   - name: ghcr-pull
+      containers:
+        - name: web
+          image: ghcr.io/saiudayagiri/gsoc-alumni-wall:v1
+          imagePullPolicy: Always # v1 is a moving tag; never reuse a stale cache
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef: { name: gsoc-wall-env }
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 300m, memory: 256Mi }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 3
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 8
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gsoc-wall
+spec:
+  selector: { app: gsoc-wall }
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gsoc-wall
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod # <- set to your issuer
+spec:
+  rules:
+    - host: gsocalumni.org # <- your host
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gsoc-wall
+                port: { number: 80 }
+  tls:
+    - hosts: [gsocalumni.org]
+      secretName: gsoc-wall-tls
+---
+# Keeps the Supabase project awake (free projects pause after ~7 days idle).
+# Self-contained alternative to the GitHub Action — pings the service daily.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gsoc-wall-keepalive
+spec:
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ping
+              image: curlimages/curl:8.11.0
+              args: ["-fsS", "http://gsoc-wall.default.svc.cluster.local/api/keepalive"]
