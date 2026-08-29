@@ -24,8 +24,17 @@
       "year": "2026"
     }
   ],
-  "socials": [],
+  "socials": [
+    {
+      "url": "https://github.com/PRIYANSHU2026",
+      "platform": "GitHub"
+    },
+    {
+      "url": "https://priyanshu-2026-github-io.vercel.app/",
+      "platform": "Website"
+    }
+  ],
   "sigs": [],
   "createdAt": "2026-08-29T12:13:05.419+00:00",
-  "updatedAt": null
+  "updatedAt": "2026-08-29T12:14:31.475+00:00"
 }
