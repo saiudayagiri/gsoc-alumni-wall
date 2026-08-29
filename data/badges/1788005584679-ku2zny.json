@@ -1,0 +1,31 @@
+{
+  "id": "1788005584679-ku2zny",
+  "name": "PRIYANSHU TIWARI",
+  "org": "INCF",
+  "event": "Alumni CAMP India 2026",
+  "city": "Delhi",
+  "currentCity": "Bengaluru",
+  "nativeCity": "UP",
+  "year": "2026",
+  "role": "Attendee",
+  "linkedin": "https://www.linkedin.com/in/priyanshu-tiwari-305661258/",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2025/projects/e2mngo2U",
+  "owner": "cf7c36f3bc157e3712378da330d73be7d880a3212988123a3852f51327e066e7",
+  "photo": "/api/photo?id=1788005584679-ku2zny",
+  "roadmap": [
+    {
+      "org": "INCF",
+      "role": "Contributor",
+      "year": "2025"
+    },
+    {
+      "org": "INCF",
+      "role": "Mentor",
+      "year": "2026"
+    }
+  ],
+  "socials": [],
+  "sigs": [],
+  "createdAt": "2026-08-29T12:13:05.419+00:00",
+  "updatedAt": null
+}
