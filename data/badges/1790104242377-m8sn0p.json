@@ -1,0 +1,31 @@
+{
+  "id": "1790104242377-m8sn0p",
+  "name": "Ruchi Pakhle",
+  "org": "Alumni Camp Bengaluru",
+  "event": "Alumni CAMP India 2026",
+  "city": "Bengaluru",
+  "currentCity": "Bangalore",
+  "nativeCity": "Mumbai",
+  "year": "2026",
+  "role": "Org Admin",
+  "linkedin": "https://www.linkedin.com/in/ruchi-pakhle-a0a5311b0/",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2026/projects/2025-gsoc-summary",
+  "owner": "5a2eb5f6de0a00a3d9afbb2bcd77e353125ce25bda08fad5db3b24cc539a3ad3",
+  "photo": "/api/photo?id=1790104242377-m8sn0p",
+  "roadmap": [
+    {
+      "org": "Alumni Camp Bengaluru",
+      "role": "Org Admin",
+      "year": "2026"
+    }
+  ],
+  "socials": [
+    {
+      "url": "https://github.com/Ruchip16",
+      "platform": "GitHub"
+    }
+  ],
+  "sigs": [],
+  "createdAt": "2026-09-22T19:10:43.701+00:00",
+  "updatedAt": null
+}
