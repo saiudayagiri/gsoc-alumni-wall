@@ -1,0 +1,40 @@
+{
+  "id": "1790974641005-cngyrb",
+  "name": "Alok Kumar Mishra",
+  "org": "Rizin",
+  "event": "Alumni CAMP India 2026",
+  "city": "Bengaluru",
+  "currentCity": "Jabalpur",
+  "nativeCity": "Vadodara",
+  "year": "2026",
+  "role": "GSoCer",
+  "linkedin": "https://www.linkedin.com/in/indalok",
+  "gsocUrl": "https://summerofcode.withgoogle.com/archive/2026/projects/2nJXboq3",
+  "owner": "7642bdaf0392b86e8dd40d7cd055dcf3664d53ef334a0e7c497ffc7d434410f2",
+  "photo": "/api/photo?id=1790974641005-cngyrb",
+  "roadmap": [
+    {
+      "org": "Rizin",
+      "role": "Contributor",
+      "year": "2026"
+    },
+    {
+      "org": "Alumni Camp",
+      "role": "Attendee",
+      "year": "2026"
+    }
+  ],
+  "socials": [
+    {
+      "url": "https://github.com/indalok",
+      "platform": "GitHub"
+    },
+    {
+      "url": "https://indalok.github.io",
+      "platform": "Website"
+    }
+  ],
+  "sigs": [],
+  "createdAt": "2026-10-02T20:57:21.782+00:00",
+  "updatedAt": null
+}
